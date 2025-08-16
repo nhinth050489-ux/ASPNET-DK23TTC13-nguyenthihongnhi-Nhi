@@ -1,0 +1,26 @@
+# BÁO CÁO TIẾN ĐỘ - TUẦN 3
+
+## 1. Thông tin sinh viên
+- Họ và tên: Nguyễn Thị Hồng Nhi
+- Lớp: DK23TTC13
+- Đề tài: Xây dựng website chia sẻ công thức nấu ăn
+
+## 2. Nội dung công việc đã thực hiện
+- Hoàn thiện chức năng đăng công thức (bao gồm tên món, nguyên liệu, hướng dẫn).
+- Xây dựng chức năng tìm kiếm công thức theo từ khóa.
+- Thêm chức năng xem chi tiết công thức.
+- Tích hợp upload hình ảnh món ăn.
+
+## 3. Kết quả đạt được
+- Người dùng đã có thể đăng và xem công thức.
+- Chức năng tìm kiếm hoạt động cơ bản.
+- Hình ảnh công thức hiển thị được.
+
+## 4. Kế hoạch tuần tiếp theo
+- Hoàn thiện chức năng bình luận dưới mỗi công thức.
+- Xây dựng trang cá nhân của người dùng (hiển thị các công thức đã đăng).
+- Kiểm thử toàn bộ chức năng.
+
+## 5. Khó khăn và hướng giải quyết
+- Tốc độ tải hình ảnh chậm → sẽ nén hình ảnh trước khi lưu.
+- Giao diện chưa đẹp → sẽ chỉnh sửa bằng Bootstrap template.
