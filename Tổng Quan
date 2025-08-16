@@ -16,7 +16,14 @@ Dự án này nhằm xây dựng một website cho phép người dùng:
 
 ## Thành viên thực hiện  
 - **Nguyễn Thị Hồng Nhi**  
-
+## Giáo viên hướng dẫn
+- **Đoàn Phước Miền**
+## Hướng dẫn chạy
+1. Clone repo về máy:
+   ```bash git clone https://github.com/nhinth050489/ASPNET-DK23TTC13-nguyenthihongnhi-Nhi
+2.	Mở project bằng Visual Studio
+3.	Chạy lệnh update-database để khởi tạo cơ sở dữ liệu
+4.	Nhấn Run để chạy website
 ## Tiến độ thực hiện  
 - Tuần 1: Tìm hiểu yêu cầu, thiết kế giao diện, tạo repo GitHub.  
 - Tuần 2: Xây dựng cơ sở dữ liệu.  
