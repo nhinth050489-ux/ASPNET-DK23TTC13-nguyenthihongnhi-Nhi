@@ -1,0 +1,25 @@
+# BÁO CÁO TIẾN ĐỘ - TUẦN 2
+
+## 1. Thông tin sinh viên
+- Họ và tên: Nguyễn Thị Hồng Nhi
+- Lớp: DK23TTC13
+- Đề tài: Xây dựng website chia sẻ công thức nấu ăn
+
+## 2. Nội dung công việc đã thực hiện
+- Thiết kế giao diện trang chủ với danh sách công thức nấu ăn nổi bật.
+- Thiết kế form đăng nhập/đăng ký người dùng.
+- Tạo cơ sở dữ liệu với bảng Người dùng, Công thức, Nguyên liệu, Bình luận.
+- Kết nối cơ sở dữ liệu với project ASP.NET.
+
+## 3. Kết quả đạt được
+- Giao diện cơ bản chạy ổn định.
+- Người dùng có thể đăng ký tài khoản mới.
+- Dữ liệu công thức mẫu đã được thêm thành công vào SQL Server.
+
+## 4. Kế hoạch tuần tiếp theo
+- Xây dựng chức năng đăng công thức nấu ăn mới.
+- Xây dựng chức năng tìm kiếm công thức theo tên hoặc nguyên liệu.
+
+## 5. Khó khăn và hướng giải quyết
+- Một số lỗi validate form đăng ký → sẽ kiểm tra bằng ASP.NET Data Annotations.
+- Cơ sở dữ liệu chưa tối ưu → cần bổ sung quan hệ giữa bảng Công thức và bảng Nguyên liệu.
