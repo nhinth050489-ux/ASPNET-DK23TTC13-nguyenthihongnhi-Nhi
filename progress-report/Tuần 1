@@ -1,1 +1,23 @@
+# BÁO CÁO TIẾN ĐỘ - TUẦN 1
 
+## 1. Thông tin sinh viên
+- Họ và tên: Nguyễn Thị Hồng Nhi
+- Lớp: DK23TTC13
+- Đề tài: Xây dựng website chia sẻ công thức nấu ăn
+
+## 2. Nội dung công việc đã thực hiện
+- Xác định mục tiêu đề tài: tạo website để người dùng có thể chia sẻ, tìm kiếm và lưu trữ công thức nấu ăn.
+- Tìm hiểu công nghệ cần sử dụng: ASP.NET MVC, C#, SQL Server, HTML/CSS/Bootstrap.
+- Phân tích chức năng sơ bộ: đăng ký, đăng nhập, đăng công thức, tìm kiếm công thức, bình luận.
+
+## 3. Kết quả đạt được
+- Xây dựng được sơ đồ use-case của hệ thống.
+- Xác định các bảng dữ liệu chính: Người dùng, Công thức, Nguyên liệu, Bình luận.
+
+## 4. Kế hoạch tuần tiếp theo
+- Thiết kế giao diện cơ bản (trang chủ, trang đăng nhập, trang danh sách công thức).
+- Cài đặt cơ sở dữ liệu ban đầu.
+
+## 5. Khó khăn và hướng giải quyết
+- Chưa quen thiết kế giao diện → tham khảo mẫu từ Bootstrap.
+- Chưa rõ về thiết kế cơ sở dữ liệu → tìm thêm ví dụ về hệ thống blog/recipe để học hỏi.
