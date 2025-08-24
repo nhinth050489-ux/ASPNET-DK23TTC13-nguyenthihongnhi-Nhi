@@ -1,0 +1,4335 @@
+Phụ lục
+Trang ChiTietCongThuc.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ChiTietCongThuc.aspx.cs" Inherits="CongThucNauAnDB.ChiTietCongThuc" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Chi tiết công thức - Bếp của Nhi</title>
+    <style>
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav a { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+
+        
+        .recipe-detail-card {
+            background-color: #fff;
+            padding: 30px 40px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        .recipe-title {
+            font-size: 32px;
+            font-weight: 700;
+            color: #c62828;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .recipe-image {
+            width: 100%;
+            height: auto;
+            max-height: 450px;
+            object-fit: cover;
+            border-radius: 8px;
+            margin-bottom: 25px;
+        }
+
+        .recipe-description {
+            font-size: 18px;
+            color: #555;
+            margin-bottom: 30px;
+            font-style: italic;
+        }
+        
+        .recipe-section h3 {
+            font-size: 22px;
+            font-weight: 600;
+            color: #333;
+            border-bottom: 2px solid #e57373;
+            padding-bottom: 8px;
+            margin-bottom: 15px;
+        }
+        
+        .recipe-section ul, .recipe-section ol {
+            padding-left: 20px;
+            line-height: 1.8;
+        }
+
+        .access-denied-panel {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #fff3e0;
+            border: 1px solid #ffcc80;
+            border-radius: 8px;
+            text-align: center;
+            color: #e65100;
+        }
+        .access-denied-panel a {
+            color: #c62828;
+            font-weight: bold;
+        }
+
+        .error-message {
+            text-align: center;
+            font-size: 20px;
+            color: #d32f2f;
+            padding: 50px 0;
+        }
+
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <!-- Header -->
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="TrangChu.aspx">Trang Chủ</a>
+                <a href="CongThuc.aspx">Công Thức</a>
+                <a href="DangNhap.aspx">Đăng Nhập</a>
+                <a href="DangKy.aspx">Đăng Ký</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <div class="container">
+            <asp:Panel ID="pnlRecipeContent" runat="server" Visible="false" CssClass="recipe-detail-card">
+                
+                <%-- Tiêu đề công thức --%>
+                <asp:Literal ID="litTitle" runat="server">
+                    <h1 class="recipe-title"></h1>
+                </asp:Literal>
+                
+                <%-- Ảnh món ăn --%>
+                <asp:Image ID="imgRecipe" runat="server" CssClass="recipe-image" />
+                
+                <%-- Mô tả ngắn --%>
+                <asp:Literal ID="litDescription" runat="server">
+                    <p class="recipe-description"></p>
+                </asp:Literal>
+
+                <%-- Panel này chỉ hiển thị khi người dùng có quyền --%>
+                <asp:Panel ID="pnlFullAccess" runat="server" Visible="false">
+                    <div class="recipe-section">
+                        <h3>Nguyên liệu</h3>
+                        <asp:Literal ID="litIngredients" runat="server"></asp:Literal>
+                    </div>
+                    <div class="recipe-section" style="margin-top: 30px;">
+                        <h3>Hướng dẫn thực hiện</h3>
+                        <asp:Literal ID="litInstructions" runat="server"></asp:Literal>
+                    </div>
+                </asp:Panel>
+
+                <%-- Panel này hiển thị khi người dùng KHÔNG có quyền --%>
+                <asp:Panel ID="pnlLimitedAccess" runat="server" Visible="false">
+                    <div class="access-denied-panel">
+                        <p>Bạn cần là thành viên trong nhóm của người chia sẻ để xem chi tiết nguyên liệu và hướng dẫn. Vui lòng <a href="DangNhap.aspx">đăng nhập</a> và liên hệ người chia sẻ để được thêm vào nhóm.</p>
+                    </div>
+                </asp:Panel>
+
+            </asp:Panel>
+
+            <%-- Hiển thị thông báo nếu không tìm thấy công thức --%>
+            <asp:Label ID="lblErrorMessage" runat="server" Visible="false" CssClass="error-message"></asp:Label>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang ChiTietCongThuc.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB
+{
+    public partial class ChiTietCongThuc : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                // Lấy ID từ query string
+                if (int.TryParse(Request.QueryString["id"], out int recipeId))
+                {
+                    LoadRecipeDetails(recipeId);
+                }
+                else
+                {
+                    // ID không hợp lệ hoặc không tồn tại
+                    ShowError("Công thức không hợp lệ hoặc không tồn tại.");
+                }
+            }
+        }
+
+        private void LoadRecipeDetails(int recipeId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT * FROM Recipes WHERE recipe_id = @RecipeId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@RecipeId", recipeId);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            // Hiển thị thông tin công khai
+                            litTitle.Text = $"<h1 class='recipe-title'>{reader["title"]}</h1>";
+                            litDescription.Text = $"<p class='recipe-description'>{reader["description"]}</p>";
+                            imgRecipe.ImageUrl = $"Images/{reader["image_url"]}";
+                            imgRecipe.AlternateText = reader["title"].ToString();
+
+                            pnlRecipeContent.Visible = true; // Hiển thị panel chính
+
+                            // Lấy thông tin người tạo và người dùng hiện tại
+                            int creatorId = Convert.ToInt32(reader["creator_id"]);
+                            object currentUserIdObj = Session["UserId"];
+
+                            // Kiểm tra quyền truy cập
+                            if (CheckUserPermission(creatorId, currentUserIdObj))
+                            {
+                                // Có quyền -> hiển thị đầy đủ
+                                pnlFullAccess.Visible = true;
+                                pnlLimitedAccess.Visible = false;
+                                litIngredients.Text = FormatContent(reader["ingredients"].ToString());
+                                litInstructions.Text = FormatContent(reader["instructions"].ToString());
+                            }
+                            else
+                            {
+                                // Không có quyền -> chỉ hiển thị thông báo
+                                pnlFullAccess.Visible = false;
+                                pnlLimitedAccess.Visible = true;
+                            }
+                        }
+                        else
+                        {
+                            ShowError("Không tìm thấy công thức bạn yêu cầu.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi khi tải chi tiết công thức: " + ex.Message);
+                        ShowError("Đã có lỗi xảy ra khi tải dữ liệu.");
+                    }
+                }
+            }
+        }
+
+        private bool CheckUserPermission(int creatorId, object currentUserIdObj)
+        {
+            // Nếu người dùng chưa đăng nhập, không có quyền
+            if (currentUserIdObj == null)
+            {
+                return false;
+            }
+
+            int currentUserId = Convert.ToInt32(currentUserIdObj);
+
+            // Nếu người dùng là người tạo công thức, có quyền
+            if (currentUserId == creatorId)
+            {
+                return true;
+            }
+
+            // Kiểm tra xem người dùng có phải là thành viên trong nhóm của người tạo không
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Query phức tạp để kiểm tra thành viên nhóm
+                string query = @"SELECT COUNT(1) 
+                                 FROM GroupMembers gm
+                                 INNER JOIN [Groups] g ON gm.group_id = g.group_id
+                                 WHERE g.owner_id = @CreatorId AND gm.user_id = @CurrentUserId";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CreatorId", creatorId);
+                    cmd.Parameters.AddWithValue("@CurrentUserId", currentUserId);
+                    try
+                    {
+                        con.Open();
+                        int count = (int)cmd.ExecuteScalar();
+                        return count > 0; // Nếu count > 0, người dùng là thành viên -> có quyền
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi khi kiểm tra quyền: " + ex.Message);
+                        return false;
+                    }
+                }
+            }
+        }
+
+       
+        private string FormatContent(string content)
+        {
+            if (string.IsNullOrWhiteSpace(content)) return "";
+            // Giả định mỗi dòng là một mục trong danh sách
+            var lines = content.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            return "<ul><li>" + string.Join("</li><li>", lines) + "</li></ul>";
+        }
+
+        private void ShowError(string message)
+        {
+            pnlRecipeContent.Visible = false;
+            lblErrorMessage.Text = message;
+            lblErrorMessage.Visible = true;
+        }
+    }
+}
+Trang CongThuc.aspx.cs
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CongThuc.aspx.cs" Inherits="CongThucNauAnDB.CongThuc" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Tất cả công thức - Bếp của Nhi</title>
+    <style>
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        .header {
+            background-color: #fff;
+            padding: 20px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #e57373;
+        }
+        .header .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #c62828;
+            text-decoration: none;
+        }
+        .header .logo span {
+            font-weight: 300;
+            color: #555;
+        }
+        .nav a {
+            color: #555;
+            text-decoration: none;
+            font-size: 16px;
+            margin-left: 25px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+        .nav a:hover, .nav a.active {
+            background-color: #e57373;
+            color: #fff;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #c62828;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 10px;
+        }
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+        .recipe-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+        .recipe-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+        .recipe-card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        .recipe-card-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+        .recipe-card-content p {
+            margin: 0 0 20px 0;
+            color: #666;
+            font-size: 14px;
+            flex-grow: 1;
+        }
+        .btn-view {
+            display: inline-block;
+            background-color: #e57373;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            align-self: flex-start;
+        }
+        .btn-view:hover {
+            background-color: #d32f2f;
+        }
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+            background-color: #333;
+            color: #f1f1f1;
+            font-size: 14px;
+        }
+
+        
+        .search-bar {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+            gap: 10px;
+        }
+
+        .search-bar .search-input {
+            width: 400px;
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            outline: none;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .search-bar .search-input:focus {
+            border-color: #e57373;
+            box-shadow: 0 0 0 3px rgba(229, 115, 115, 0.2);
+        }
+
+        .search-bar .search-button {
+            padding: 12px 25px;
+            font-size: 16px;
+            background-color: #e57373;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .search-bar .search-button:hover {
+            background-color: #d32f2f;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="TrangChu.aspx">Trang Chủ</a>
+                <a href="CongThuc.aspx" class="active">Công Thức</a>
+                <a href="DangNhap.aspx">Đăng Nhập</a>
+                <a href="DangKy.aspx">Đăng Ký</a>
+            </nav>
+        </header>
+
+        
+        <div class="container">
+            <h2 class="section-title">Danh sách công thức</h2>
+
+            <!-- Search Bar -->
+            <div class="search-bar">
+                <asp:TextBox ID="txtSearch" runat="server" CssClass="search-input" placeholder="Nhập tên món ăn..."></asp:TextBox>
+                <asp:Button ID="btnSearch" runat="server" Text="Tìm kiếm" CssClass="search-button" OnClick="btnSearch_Click" />
+            </div>
+
+            <asp:Repeater ID="RepeaterAllRecipes" runat="server">
+                <HeaderTemplate>
+                    <div class="recipe-grid">
+                </HeaderTemplate>
+                
+                <ItemTemplate>
+                    <div class="recipe-card">
+                        <img src='Images/<%# Eval("image_url") %>' alt='<%# Eval("title") %>' 
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/e57373/FFFFFF?text=Ảnh+Món+Ăn';" />
+                        <div class="recipe-card-content">
+                            <h3><%# Eval("title") %></h3>
+                            <p><%# Eval("description") %></p>
+                            <a href='ChiTietCongThuc.aspx?id=<%# Eval("recipe_id") %>' class="btn-view">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </ItemTemplate>
+
+                <FooterTemplate>
+                    </div>
+                </FooterTemplate>
+            </asp:Repeater>
+            
+            <asp:Label ID="lblNoResults" runat="server" Text="Không tìm thấy công thức nào phù hợp." Visible="false" CssClass="section-title" ForeColor="Gray"></asp:Label>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang CongThuc.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB
+{
+    public partial class CongThuc : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                
+                LoadAllRecipes();
+            }
+        }
+
+        
+        protected void btnSearch_Click(object sender, EventArgs e)
+        {
+            
+            string searchTerm = txtSearch.Text.Trim();
+            LoadAllRecipes(searchTerm);
+        }
+
+       
+        private void LoadAllRecipes(string searchTerm = "")
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                
+                string query = "SELECT recipe_id, title, description, image_url FROM Recipes";
+
+                
+                if (!string.IsNullOrEmpty(searchTerm))
+                {
+                    query += " WHERE title LIKE @SearchTerm";
+                }
+
+                query += " ORDER BY created_at DESC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    
+                    if (!string.IsNullOrEmpty(searchTerm))
+                    {
+                        cmd.Parameters.AddWithValue("@SearchTerm", "%" + searchTerm + "%");
+                    }
+
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            
+                            RepeaterAllRecipes.DataSource = dt;
+                            RepeaterAllRecipes.DataBind();
+                            RepeaterAllRecipes.Visible = true;
+                            lblNoResults.Visible = false;
+                        }
+                        else
+                        {
+                            
+                            RepeaterAllRecipes.Visible = false;
+                            lblNoResults.Visible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi khi tải công thức: " + ex.Message);
+                        lblNoResults.Text = "Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.";
+                        lblNoResults.Visible = true;
+                        RepeaterAllRecipes.Visible = false;
+                    }
+                }
+            }
+        }
+    }
+}
+Trang CongThucCuaToi.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="CongThucCuaToi.aspx.cs" Inherits="CongThucNauAnDB.CongThucCuaToi" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Công thức của tôi - Bếp của Nhi</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        .nav .logout-btn:hover { background-color: #f1f1f1; }
+        .page-title { font-size: 24px; font-weight: 600; color: #c62828; margin-bottom: 25px; text-align: center; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px; }
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 30px; }
+        .recipe-card { background-color: #fff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.08); overflow: hidden; transition: transform 0.3s, box-shadow 0.3s; display: flex; flex-direction: column; }
+        .recipe-card:hover { transform: translateY(-5px); box-shadow: 0 8px 25px rgba(0,0,0,0.12); }
+        .recipe-card img { width: 100%; height: 200px; object-fit: cover; }
+        .recipe-card-content { padding: 20px; flex-grow: 1; display: flex; flex-direction: column; }
+        .recipe-card-content h3 { margin: 0 0 10px 0; font-size: 20px; color: #333; }
+        .recipe-card-content p { margin: 0 0 20px 0; color: #666; font-size: 14px; flex-grow: 1; }
+        .btn-view { display: inline-block; background-color: #e57373; color: #fff; padding: 10px 15px; border-radius: 5px; text-decoration: none; text-align: center; font-weight: 500; transition: background-color 0.3s; align-self: flex-start; }
+        .btn-view:hover { background-color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <asp:HyperLink ID="hlTrangChu" runat="server" NavigateUrl="~/TrangChu.aspx">Trang Chủ</asp:HyperLink>
+                <asp:HyperLink ID="hlTatCaCongThuc" runat="server" NavigateUrl="~/CongThuc.aspx">Tất cả Công Thức</asp:HyperLink>
+                
+                <asp:Panel ID="pnlUser" runat="server" Visible="false">
+                    <asp:HyperLink ID="hlCongThucCuaToi" runat="server" NavigateUrl="~/CongThucCuaToi.aspx" CssClass="active">Công thức của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlNhomCuaToi" runat="server" NavigateUrl="~/NhomCuaToi.aspx">Nhóm của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlThongTinCaNhan" runat="server" NavigateUrl="~/ThongTinCaNhan.aspx">
+                        <asp:Label ID="lblXinChao" runat="server"></asp:Label>
+                    </asp:HyperLink>
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                </asp:Panel>
+            </nav>
+        </header>
+
+        <div class="container">
+            <h2 class="page-title">Công thức từ các nhóm của bạn</h2>
+            
+            <asp:Repeater ID="RepeaterMyRecipes" runat="server">
+                <HeaderTemplate>
+                    <div class="recipe-grid">
+                </HeaderTemplate>
+                <ItemTemplate>
+                    <div class="recipe-card">
+                        <img src='Images/<%# Eval("image_url") %>' alt='<%# Eval("title") %>' 
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/e57373/FFFFFF?text=Ảnh+Món+Ăn';" />
+                        <div class="recipe-card-content">
+                            <h3><%# Eval("title") %></h3>
+                            <p><%# Eval("description") %></p>
+                            <a href='ChiTietCongThuc.aspx?id=<%# Eval("recipe_id") %>' class="btn-view">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </ItemTemplate>
+                <FooterTemplate>
+                    </div>
+                </FooterTemplate>
+            </asp:Repeater>
+            
+            <asp:Label ID="lblNoRecipes" runat="server" Text="Bạn chưa tham gia nhóm nào hoặc các nhóm của bạn chưa có công thức." Visible="false" CssClass="page-title" ForeColor="Gray"></asp:Label>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang CongThucCuaToi.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB
+{
+    public partial class CongThucCuaToi : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+            if (!IsPostBack)
+            {
+                SetupHeader();
+                LoadMyRecipes();
+            }
+        }
+
+        private void SetupHeader()
+        {
+            if (Session["FullName"] != null)
+            {
+                pnlUser.Visible = true;
+                lblXinChao.Text = "Xin chào, " + Session["FullName"];
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        private void LoadMyRecipes()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                
+                string query = @"SELECT DISTINCT r.recipe_id, r.title, r.description, r.image_url
+                                 FROM Recipes r
+                                 INNER JOIN [Groups] g ON r.creator_id = g.owner_id
+                                 INNER JOIN GroupMembers gm ON g.group_id = gm.group_id
+                                 WHERE gm.user_id = @CurrentUserId
+                                 ORDER BY r.recipe_id DESC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CurrentUserId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            RepeaterMyRecipes.DataSource = dt;
+                            RepeaterMyRecipes.DataBind();
+                        }
+                        else
+                        {
+                            lblNoRecipes.Visible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lblNoRecipes.Text = "Lỗi khi tải công thức: " + ex.Message;
+                        lblNoRecipes.Visible = true;
+                    }
+                }
+            }
+        }
+    }
+}
+Trang DangKy.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="DangKy.aspx.cs" Inherits="CongThucNauAnDB.DangKy" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Đăng ký - Bếp của Nhi</title>
+    <style>
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav a { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+        
+        
+        .register-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .register-box {
+            width: 100%;
+            max-width: 450px;
+            padding: 40px;
+            background-color: #fff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .register-box h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .input-group .form-control {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .btn-register {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #e57373;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-register:hover {
+            background-color: #d32f2f;
+        }
+
+        .login-links {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .login-links a {
+            color: #e57373;
+            text-decoration: none;
+        }
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .message-panel {
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            font-weight: 500;
+        }
+        .error-message {
+            background-color: #ffebee;
+            color: #c62828;
+            border: 1px solid #ef9a9a;
+        }
+        .success-message {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            border: 1px solid #a5d6a7;
+        }
+        .validation-error {
+            color: #d32f2f;
+            font-size: 12px;
+            font-weight: normal;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <!-- Header -->
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="TrangChu.aspx">Trang Chủ</a>
+                <a href="CongThuc.aspx">Công Thức</a>
+                <a href="DangNhap.aspx">Đăng Nhập</a>
+                <a href="DangKy.aspx" class="active">Đăng Ký</a>
+            </nav>
+        </header>
+
+        <!-- Main Content -->
+        <div class="register-container">
+            <div class="register-box">
+                <h2>Tạo Tài Khoản Mới</h2>
+
+                <asp:Literal ID="litMessage" runat="server" EnableViewState="false"></asp:Literal>
+
+                <div class="input-group">
+                    <label for="txtFullName">Họ và tên</label>
+                    <asp:TextBox ID="txtFullName" runat="server" CssClass="form-control"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvFullName" runat="server" ControlToValidate="txtFullName" ErrorMessage="Vui lòng nhập họ tên." CssClass="validation-error" Display="Dynamic"></asp:RequiredFieldValidator>
+                </div>
+
+                <div class="input-group">
+                    <label for="txtUsername">Tên đăng nhập</label>
+                    <asp:TextBox ID="txtUsername" runat="server" CssClass="form-control"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvUsername" runat="server" ControlToValidate="txtUsername" ErrorMessage="Vui lòng nhập tên đăng nhập." CssClass="validation-error" Display="Dynamic"></asp:RequiredFieldValidator>
+                </div>
+                
+                <div class="input-group">
+                    <label for="txtEmail">Email</label>
+                    <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvEmail" runat="server" ControlToValidate="txtEmail" ErrorMessage="Vui lòng nhập email." CssClass="validation-error" Display="Dynamic"></asp:RequiredFieldValidator>
+                    <asp:RegularExpressionValidator ID="revEmail" runat="server" ControlToValidate="txtEmail" ValidationExpression="\w+([-+.']\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*" ErrorMessage="Định dạng email không hợp lệ." CssClass="validation-error" Display="Dynamic"></asp:RegularExpressionValidator>
+                </div>
+
+                <div class="input-group">
+                    <label for="txtPassword">Mật khẩu</label>
+                    <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvPassword" runat="server" ControlToValidate="txtPassword" ErrorMessage="Vui lòng nhập mật khẩu." CssClass="validation-error" Display="Dynamic"></asp:RequiredFieldValidator>
+                </div>
+
+                <div class="input-group">
+                    <label for="txtConfirmPassword">Xác nhận mật khẩu</label>
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                    <asp:RequiredFieldValidator ID="rfvConfirmPassword" runat="server" ControlToValidate="txtConfirmPassword" ErrorMessage="Vui lòng xác nhận mật khẩu." CssClass="validation-error" Display="Dynamic"></asp:RequiredFieldValidator>
+                    <asp:CompareValidator ID="cvPassword" runat="server" ControlToValidate="txtConfirmPassword" ControlToCompare="txtPassword" Operator="Equal" ErrorMessage="Mật khẩu xác nhận không khớp." CssClass="validation-error" Display="Dynamic"></asp:CompareValidator>
+                </div>
+                
+                <asp:Button ID="btnRegister" runat="server" Text="Đăng Ký" CssClass="btn-register" OnClick="btnRegister_Click" />
+
+                <div class="login-links">
+                    <p>Đã có tài khoản? <a href="DangNhap.aspx">Đăng nhập tại đây</a></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang DangKy.aspx.cs
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+
+
+namespace CongThucNauAnDB
+{
+    public partial class DangKy : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+
+        }
+
+        protected void btnRegister_Click(object sender, EventArgs e)
+        {
+            
+            if (!Page.IsValid)
+            {
+                return;
+            }
+
+            string fullName = txtFullName.Text.Trim();
+            string username = txtUsername.Text.Trim();
+            string email = txtEmail.Text.Trim();
+            string password = txtPassword.Text.Trim();
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    con.Open();
+
+                    
+                    string checkUserQuery = "SELECT COUNT(1) FROM Users WHERE username = @Username OR email = @Email";
+                    using (SqlCommand checkCmd = new SqlCommand(checkUserQuery, con))
+                    {
+                        checkCmd.Parameters.AddWithValue("@Username", username);
+                        checkCmd.Parameters.AddWithValue("@Email", email);
+                        int userExists = (int)checkCmd.ExecuteScalar();
+                        if (userExists > 0)
+                        {
+                            ShowMessage("Tên đăng nhập hoặc email đã được sử dụng.", true);
+                            return;
+                        }
+                    }
+
+                   
+                    string hashedPassword = password; 
+
+                    
+                    string insertQuery = @"INSERT INTO Users (full_name, username, email, password_hash, role_id, status) 
+                                           VALUES (@FullName, @Username, @Email, @PasswordHash, @RoleId, @Status)";
+                    using (SqlCommand insertCmd = new SqlCommand(insertQuery, con))
+                    {
+                        insertCmd.Parameters.AddWithValue("@FullName", fullName);
+                        insertCmd.Parameters.AddWithValue("@Username", username);
+                        insertCmd.Parameters.AddWithValue("@Email", email);
+                        insertCmd.Parameters.AddWithValue("@PasswordHash", hashedPassword);
+                        insertCmd.Parameters.AddWithValue("@RoleId", 3); 
+                        insertCmd.Parameters.AddWithValue("@Status", "pending"); 
+
+                        int result = insertCmd.ExecuteNonQuery();
+
+                        if (result > 0)
+                        {
+                            
+                            ShowMessage("Đăng ký thành công! Tài khoản của bạn đang chờ quản trị viên duyệt.", false);
+                            btnRegister.Enabled = false; 
+                        }
+                        else
+                        {
+                            ShowMessage("Đã có lỗi xảy ra trong quá trình đăng ký.", true);
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Lỗi khi đăng ký: " + ex.Message);
+                    ShowMessage("Đã có lỗi hệ thống. Vui lòng thử lại sau.", true);
+                }
+            }
+        }
+
+        
+        private void ShowMessage(string message, bool isError)
+        {
+            string cssClass = isError ? "error-message" : "success-message";
+            litMessage.Text = $"<div class='message-panel {cssClass}'>{message}</div>";
+        }
+    }
+}
+Trang DangNhap.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="DangNhap.aspx.cs" Inherits="CongThucNauAnDB.DangNhap" %>
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Đăng nhập - Bếp của Nhi</title>
+    <style>
+        
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav a { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; position: absolute; bottom: 0; width: 100%; box-sizing: border-box;}
+        html, body, form { height: 100%; margin: 0; }
+        .main-container { min-height: calc(100% - 170px); }
+
+
+       
+        .login-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 60px 20px;
+        }
+
+        .login-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 40px;
+            background-color: #fff;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #555;
+        }
+
+        .input-group .form-control {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+
+        .btn-login {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            font-weight: bold;
+            color: #fff;
+            background-color: #e57373;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .btn-login:hover {
+            background-color: #d32f2f;
+        }
+
+        .login-links {
+            margin-top: 20px;
+            font-size: 14px;
+        }
+
+        .login-links a {
+            color: #e57373;
+            text-decoration: none;
+        }
+        .login-links a:hover {
+            text-decoration: underline;
+        }
+        
+        .error-message {
+            color: #d32f2f;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+       
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="TrangChu.aspx">Trang Chủ</a>
+                <a href="CongThuc.aspx">Công Thức</a>
+                <a href="DangNhap.aspx" class="active">Đăng Nhập</a>
+                <a href="DangKy.aspx">Đăng Ký</a>
+            </nav>
+        </header>
+
+        
+        <div class="main-container">
+            <div class="login-container">
+                <div class="login-box">
+                    <h2>Đăng Nhập Tài Khoản</h2>
+
+                    <asp:Literal ID="litErrorMessage" runat="server" EnableViewState="false"></asp:Literal>
+
+                    <div class="input-group">
+                        <label for="txtUsername">Tên đăng nhập</label>
+                        <asp:TextBox ID="txtUsername" runat="server" CssClass="form-control"></asp:TextBox>
+                    </div>
+                    <div class="input-group">
+                        <label for="txtPassword">Mật khẩu</label>
+                        <asp:TextBox ID="txtPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                    </div>
+                    
+                    <asp:Button ID="btnLogin" runat="server" Text="Đăng Nhập" CssClass="btn-login" OnClick="btnLogin_Click" />
+
+                    <div class="login-links">
+                        <p>Chưa có tài khoản? <a href="DangKy.aspx">Đăng ký ngay</a></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+       
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang DangNhap.aspx.cs
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB
+{
+    public partial class DangNhap : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (Session["UserId"] != null)
+            {
+                
+                if (Session["UserRole"] != null)
+                {
+                    int userRole = Convert.ToInt32(Session["UserRole"]);
+                    if (userRole == 1)
+                    {
+                        Response.Redirect("~/Admin/Dashboard.aspx");
+                    }
+                    else if (userRole == 2)
+                    {
+                        Response.Redirect("~/Sharer/QuanLyCongThuc.aspx");
+                    }
+                    else
+                    {
+                        Response.Redirect("~/CongThucCuaToi.aspx");
+                    }
+                }
+                else
+                {
+                    Response.Redirect("~/CongThucCuaToi.aspx");
+                }
+            }
+        }
+
+        protected void btnLogin_Click(object sender, EventArgs e)
+        {
+            string username = txtUsername.Text.Trim();
+            string password = txtPassword.Text.Trim();
+
+            if (string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+            {
+                ShowError("Vui lòng nhập đầy đủ tên đăng nhập và mật khẩu.");
+                return;
+            }
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT user_id, password_hash, role_id, status, full_name FROM Users WHERE username = @Username";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@Username", username);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+
+                        if (reader.Read())
+                        {
+                            string storedHash = reader["password_hash"].ToString();
+                            string status = reader["status"].ToString();
+
+                            if (status.Equals("pending"))
+                            {
+                                ShowError("Tài khoản của bạn đang chờ quản trị viên duyệt.");
+                                return;
+                            }
+                            if (status.Equals("banned"))
+                            {
+                                ShowError("Tài khoản của bạn đã bị khóa.");
+                                return;
+                            }
+
+                            if (password == storedHash) 
+                            {
+                                int userRole = Convert.ToInt32(reader["role_id"]);
+                                Session["UserId"] = reader["user_id"];
+                                Session["UserRole"] = userRole;
+                                Session["FullName"] = reader["full_name"];
+
+                                
+                                if (userRole == 1) // Admin
+                                {
+                                    Response.Redirect("~/Admin/Dashboard.aspx");
+                                }
+                                else if (userRole == 2) // Sharer
+                                {
+                                    Response.Redirect("~/Sharer/QuanLyCongThuc.aspx");
+                                }
+                                else // Viewer
+                                {
+                                    Response.Redirect("~/CongThucCuaToi.aspx");
+                                }
+                            }
+                            else
+                            {
+                                ShowError("Tên đăng nhập hoặc mật khẩu không đúng.");
+                            }
+                        }
+                        else
+                        {
+                            ShowError("Tên đăng nhập hoặc mật khẩu không đúng.");
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine("Lỗi khi đăng nhập: " + ex.Message);
+                        ShowError("Đã có lỗi xảy ra. Vui lòng thử lại sau.");
+                    }
+                }
+            }
+        }
+
+        private void ShowError(string message)
+        {
+            litErrorMessage.Text = $"<div class='error-message'>{message}</div>";
+        }
+    }
+}
+Trang NhomCuaToi.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="NhomCuaToi.aspx.cs" Inherits="CongThucNauAnDB.NhomCuaToi" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Nhóm của tôi - Bếp của Nhi</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        .nav .logout-btn:hover { background-color: #f1f1f1; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f1f1f1; margin-bottom: 25px; }
+        .page-title { font-size: 24px; font-weight: 600; color: #c62828; margin-bottom: 10px; }
+        .btn-discover { background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: 500; transition: background-color 0.3s; }
+        .btn-discover:hover { background-color: #229954; }
+
+        .group-list { list-style-type: none; padding: 0; }
+        .group-item {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .group-item h3 { margin: 0 0 10px 0; color: #333; }
+        .group-item p { margin: 0 0 10px 0; color: #666; }
+        .group-item .owner { font-size: 14px; color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <asp:HyperLink ID="hlTrangChu" runat="server" NavigateUrl="~/TrangChu.aspx">Trang Chủ</asp:HyperLink>
+                <asp:HyperLink ID="hlTatCaCongThuc" runat="server" NavigateUrl="~/CongThuc.aspx">Tất cả Công Thức</asp:HyperLink>
+                
+                <asp:Panel ID="pnlUser" runat="server" Visible="false">
+                    <asp:HyperLink ID="hlCongThucCuaToi" runat="server" NavigateUrl="~/CongThucCuaToi.aspx">Công thức của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlNhomCuaToi" runat="server" NavigateUrl="~/NhomCuaToi.aspx" CssClass="active">Nhóm của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlThongTinCaNhan" runat="server" NavigateUrl="~/ThongTinCaNhan.aspx">
+                        <asp:Label ID="lblXinChao" runat="server"></asp:Label>
+                    </asp:HyperLink>
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                </asp:Panel>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <h2 class="page-title">Các nhóm đã tham gia</h2>
+                <a href="TimKiemNhom.aspx" class="btn-discover">Khám phá nhóm mới</a>
+            </div>
+
+            <asp:Repeater ID="RepeaterGroups" runat="server">
+                <HeaderTemplate>
+                    <ul class="group-list">
+                </HeaderTemplate>
+                <ItemTemplate>
+                    <li class="group-item">
+                        <h3><%# Eval("group_name") %></h3>
+                        <p><%# Eval("description") %></p>
+                        <div class="owner">Người tạo: <%# Eval("owner_name") %></div>
+                    </li>
+                </ItemTemplate>
+                <FooterTemplate>
+                    </ul>
+                </FooterTemplate>
+            </asp:Repeater>
+
+            <asp:Label ID="lblNoGroups" runat="server" Text="Bạn chưa tham gia nhóm nào." Visible="false" CssClass="page-title" ForeColor="Gray" style="text-align:center; display:block;"></asp:Label>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang NhomCuaToi.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB
+{
+    public partial class NhomCuaToi : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                SetupHeader();
+                LoadMyGroups();
+            }
+        }
+
+        private void SetupHeader()
+        {
+            if (Session["FullName"] != null)
+            {
+                pnlUser.Visible = true;
+                lblXinChao.Text = "Xin chào, " + Session["FullName"];
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        private void LoadMyGroups()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = @"SELECT g.group_name, g.description, u.full_name as owner_name 
+                                 FROM [Groups] g
+                                 INNER JOIN GroupMembers gm ON g.group_id = gm.group_id
+                                 INNER JOIN Users u ON g.owner_id = u.user_id
+                                 WHERE gm.user_id = @CurrentUserId
+                                 ORDER BY g.group_name";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CurrentUserId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            RepeaterGroups.DataSource = dt;
+                            RepeaterGroups.DataBind();
+                        }
+                        else
+                        {
+                            lblNoGroups.Visible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lblNoGroups.Text = "Lỗi khi tải danh sách nhóm: " + ex.Message;
+                        lblNoGroups.Visible = true;
+                    }
+                }
+            }
+        }
+    }
+}
+Trang ThongTinCaNhan.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ThongTinCaNhan.aspx.cs" Inherits="CongThucNauAnDB.ThongTinCaNhan" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Thông tin cá nhân - Bếp của Nhi</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        .nav .logout-btn:hover { background-color: #f1f1f1; }
+        .profile-box { background-color: #fff; padding: 30px 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .profile-box h2 { margin-top: 0; margin-bottom: 25px; color: #333; font-weight: 600; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        .input-group .form-control { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .btn-submit { padding: 12px 25px; font-size: 16px; font-weight: bold; color: #fff; background-color: #e57373; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        .btn-submit:hover { background-color: #d32f2f; }
+        .message { padding: 10px; margin: 20px 0; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <asp:HyperLink ID="hlTrangChu" runat="server" NavigateUrl="~/TrangChu.aspx">Trang Chủ</asp:HyperLink>
+                <asp:HyperLink ID="hlTatCaCongThuc" runat="server" NavigateUrl="~/CongThuc.aspx">Tất cả Công Thức</asp:HyperLink>
+                
+                <asp:Panel ID="pnlUser" runat="server" Visible="false">
+                    <asp:HyperLink ID="hlCongThucCuaToi" runat="server" NavigateUrl="~/CongThucCuaToi.aspx">Công thức của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlNhomCuaToi" runat="server" NavigateUrl="~/NhomCuaToi.aspx">Nhóm của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlThongTinCaNhan" runat="server" NavigateUrl="~/ThongTinCaNhan.aspx" CssClass="active">
+                        <asp:Label ID="lblXinChao" runat="server"></asp:Label>
+                    </asp:HyperLink>
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                </asp:Panel>
+            </nav>
+        </header>
+
+        <div class="container">
+            
+            <div class="profile-box">
+                 <h2>Thông tin cá nhân</h2>
+                <asp:Label ID="lblInfoMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+                <div class="input-group">
+                    <label>Họ và tên</label>
+                    <asp:TextBox ID="txtFullName" runat="server" CssClass="form-control"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label>Email</label>
+                    <asp:TextBox ID="txtEmail" runat="server" CssClass="form-control" TextMode="Email"></asp:TextBox>
+                </div>
+                <asp:Button ID="btnUpdateInfo" runat="server" Text="Cập nhật thông tin" CssClass="btn-submit" OnClick="btnUpdateInfo_Click" />
+            </div>
+            <div class="profile-box" style="margin-top: 30px;">
+                <h2>Đổi mật khẩu</h2>
+                <asp:Label ID="lblPasswordMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+                <div class="input-group">
+                    <label>Mật khẩu hiện tại</label>
+                    <asp:TextBox ID="txtCurrentPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label>Mật khẩu mới</label>
+                    <asp:TextBox ID="txtNewPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label>Xác nhận mật khẩu mới</label>
+                    <asp:TextBox ID="txtConfirmPassword" runat="server" CssClass="form-control" TextMode="Password"></asp:TextBox>
+                </div>
+                <asp:Button ID="btnChangePassword" runat="server" Text="Đổi mật khẩu" CssClass="btn-submit" OnClick="btnChangePassword_Click" />
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang ThongTinCaNhan.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB
+{
+    public partial class ThongTinCaNhan : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+            if (!IsPostBack)
+            {
+                SetupHeader();
+                LoadUserInfo();
+            }
+        }
+
+        private void SetupHeader()
+        {
+            if (Session["FullName"] != null)
+            {
+                pnlUser.Visible = true;
+                lblXinChao.Text = "Xin chào, " + Session["FullName"];
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        
+        private void LoadUserInfo()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT full_name, email FROM Users WHERE user_id = @UserId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@UserId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            txtFullName.Text = reader["full_name"].ToString();
+                            txtEmail.Text = reader["email"].ToString();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage(lblInfoMessage, "Lỗi khi tải thông tin: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        protected void btnUpdateInfo_Click(object sender, EventArgs e)
+        {
+            string newFullName = txtFullName.Text.Trim();
+            string newEmail = txtEmail.Text.Trim();
+            int userId = Convert.ToInt32(Session["UserId"]);
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE Users SET full_name = @FullName, email = @Email WHERE user_id = @UserId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@FullName", newFullName);
+                    cmd.Parameters.AddWithValue("@Email", newEmail);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        Session["FullName"] = newFullName; 
+                        lblXinChao.Text = "Xin chào, " + newFullName; 
+                        ShowMessage(lblInfoMessage, "Cập nhật thông tin thành công!", false);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage(lblInfoMessage, "Lỗi khi cập nhật: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        protected void btnChangePassword_Click(object sender, EventArgs e)
+        {
+            string currentPassword = txtCurrentPassword.Text;
+            string newPassword = txtNewPassword.Text;
+            string confirmPassword = txtConfirmPassword.Text;
+            int userId = Convert.ToInt32(Session["UserId"]);
+
+            if (newPassword != confirmPassword)
+            {
+                ShowMessage(lblPasswordMessage, "Mật khẩu mới không khớp.", true);
+                return;
+            }
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    con.Open();
+                    string getPassQuery = "SELECT password_hash FROM Users WHERE user_id = @UserId";
+                    string storedPassword = "";
+                    using (SqlCommand getCmd = new SqlCommand(getPassQuery, con))
+                    {
+                        getCmd.Parameters.AddWithValue("@UserId", userId);
+                        storedPassword = getCmd.ExecuteScalar().ToString();
+                    }
+
+                    if (currentPassword != storedPassword)
+                    {
+                        ShowMessage(lblPasswordMessage, "Mật khẩu hiện tại không đúng.", true);
+                        return;
+                    }
+
+                    string updatePassQuery = "UPDATE Users SET password_hash = @NewPassword WHERE user_id = @UserId";
+                    using (SqlCommand updateCmd = new SqlCommand(updatePassQuery, con))
+                    {
+                        updateCmd.Parameters.AddWithValue("@NewPassword", newPassword);
+                        updateCmd.Parameters.AddWithValue("@UserId", userId);
+                        updateCmd.ExecuteNonQuery();
+                        ShowMessage(lblPasswordMessage, "Đổi mật khẩu thành công!", false);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage(lblPasswordMessage, "Lỗi khi đổi mật khẩu: " + ex.Message, true);
+                }
+            }
+        }
+
+        private void ShowMessage(Label lbl, string message, bool isError)
+        {
+            lbl.Text = message;
+            lbl.CssClass = isError ? "message error" : "message success";
+            lbl.Visible = true;
+        }
+    }
+}
+Trang TimKiemNhom.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="TimKiemNhom.aspx.cs" Inherits="CongThucNauAnDB.TimKiemNhom" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Khám phá nhóm - Bếp của Nhi</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; line-height: 1.6; }
+        .container { max-width: 900px; margin: 40px auto; padding: 0 20px; }
+        .footer { text-align: center; padding: 30px; margin-top: 50px; background-color: #333; color: #f1f1f1; font-size: 14px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        .nav .logout-btn:hover { background-color: #f1f1f1; }
+        .page-title { font-size: 24px; font-weight: 600; color: #c62828; margin-bottom: 25px; text-align: center; border-bottom: 2px solid #f1f1f1; padding-bottom: 10px; }
+        
+        .group-list { list-style-type: none; padding: 0; }
+        .group-item {
+            background-color: #fff;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .group-info h3 { margin: 0 0 10px 0; color: #333; }
+        .group-info .owner { font-size: 14px; color: #888; font-style: italic; }
+        .btn-join {
+            background-color: #3498db;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: 500;
+            border: none;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .btn-join:hover {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+       
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <asp:HyperLink ID="hlTrangChu" runat="server" NavigateUrl="~/TrangChu.aspx">Trang Chủ</asp:HyperLink>
+                <asp:HyperLink ID="hlTatCaCongThuc" runat="server" NavigateUrl="~/CongThuc.aspx">Tất cả Công Thức</asp:HyperLink>
+                
+                <asp:Panel ID="pnlUser" runat="server" Visible="false">
+                    <asp:HyperLink ID="hlCongThucCuaToi" runat="server" NavigateUrl="~/CongThucCuaToi.aspx">Công thức của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlNhomCuaToi" runat="server" NavigateUrl="~/NhomCuaToi.aspx">Nhóm của tôi</asp:HyperLink>
+                    <asp:HyperLink ID="hlThongTinCaNhan" runat="server" NavigateUrl="~/ThongTinCaNhan.aspx">
+                        <asp:Label ID="lblXinChao" runat="server"></asp:Label>
+                    </asp:HyperLink>
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                </asp:Panel>
+            </nav>
+        </header>
+
+        <div class="container">
+            <h2 class="page-title">Khám phá các nhóm mới</h2>
+            
+            <asp:Repeater ID="RepeaterNewGroups" runat="server">
+                <HeaderTemplate>
+                    <ul class="group-list">
+                </HeaderTemplate>
+                <ItemTemplate>
+                    <li class="group-item">
+                        <div class="group-info">
+                            <h3><%# Eval("group_name") %></h3>
+                            <div class="owner">Người tạo: <%# Eval("owner_name") %></div>
+                        </div>
+                       
+                        <asp:Button runat="server" Text="Xin tham gia" CssClass="btn-join" 
+                            ToolTip="Để tham gia, vui lòng liên hệ người tạo nhóm." 
+                            OnClientClick="alert('Để tham gia, vui lòng liên hệ người tạo nhóm.'); return false;" />
+                    </li>
+                </ItemTemplate>
+                <FooterTemplate>
+                    </ul>
+                </FooterTemplate>
+            </asp:Repeater>
+
+            <asp:Label ID="lblNoNewGroups" runat="server" Text="Không có nhóm mới nào hoặc bạn đã tham gia tất cả các nhóm." Visible="false" CssClass="page-title" ForeColor="Gray" style="text-align:center; display:block;"></asp:Label>
+        </div>
+
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang TimKiemNhom.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB
+{
+    public partial class TimKiemNhom : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            
+            if (Session["UserId"] == null)
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                SetupHeader();
+                LoadNewGroups();
+            }
+        }
+
+        private void SetupHeader()
+        {
+            if (Session["FullName"] != null)
+            {
+                pnlUser.Visible = true;
+                lblXinChao.Text = "Xin chào, " + Session["FullName"];
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        private void LoadNewGroups()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                
+                string query = @"SELECT g.group_id, g.group_name, u.full_name as owner_name
+                                 FROM [Groups] g
+                                 INNER JOIN Users u ON g.owner_id = u.user_id
+                                 WHERE g.group_id NOT IN (SELECT group_id FROM GroupMembers WHERE user_id = @CurrentUserId)";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CurrentUserId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            RepeaterNewGroups.DataSource = dt;
+                            RepeaterNewGroups.DataBind();
+                        }
+                        else
+                        {
+                            lblNoNewGroups.Visible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        lblNoNewGroups.Text = "Lỗi khi tải danh sách nhóm: " + ex.Message;
+                        lblNoNewGroups.Visible = true;
+                    }
+                }
+            }
+        }
+    }
+}
+Trang Trangchu.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Trangchu.aspx.cs" Inherits="CongThucNauAnDB.Trangchu" %>
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Bếp của Nhi - Chia sẻ công thức nấu ăn</title>
+    <style>
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f8f9fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        
+        .header {
+            background-color: #fff;
+            padding: 20px 40px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 3px solid #e57373; 
+        }
+
+        .header .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #c62828; 
+            text-decoration: none;
+        }
+        .header .logo span {
+            font-weight: 300;
+            color: #555;
+        }
+
+        .nav a {
+            color: #555;
+            text-decoration: none;
+            font-size: 16px;
+            margin-left: 25px;
+            padding: 8px 12px;
+            border-radius: 5px;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .nav a:hover, .nav a.active {
+            background-color: #e57373;
+            color: #fff;
+        }
+
+        /* --- Main Content --- */
+        .container {
+            max-width: 1200px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #c62828;
+            margin-bottom: 25px;
+            text-align: center;
+            border-bottom: 2px solid #f1f1f1;
+            padding-bottom: 10px;
+        }
+
+        /* --- Recipe Grid --- */
+        .recipe-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 30px;
+        }
+
+        .recipe-card {
+            background-color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+            overflow: hidden;
+            transition: transform 0.3s, box-shadow 0.3s;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recipe-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
+        }
+
+        .recipe-card img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            border-bottom: 1px solid #eee;
+        }
+
+        .recipe-card-content {
+            padding: 20px;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .recipe-card-content h3 {
+            margin: 0 0 10px 0;
+            font-size: 20px;
+            color: #333;
+        }
+
+        .recipe-card-content p {
+            margin: 0 0 20px 0;
+            color: #666;
+            font-size: 14px;
+            flex-grow: 1;
+        }
+
+        .btn-view {
+            display: inline-block;
+            background-color: #e57373;
+            color: #fff;
+            padding: 10px 15px;
+            border-radius: 5px;
+            text-decoration: none;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            align-self: flex-start; 
+        }
+
+        .btn-view:hover {
+            background-color: #d32f2f;
+        }
+
+        /* --- Footer --- */
+        .footer {
+            text-align: center;
+            padding: 30px;
+            margin-top: 50px;
+            background-color: #333;
+            color: #f1f1f1;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <!-- Header -->
+        <header class="header">
+            <a href="TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="TrangChu.aspx" class="active">Trang Chủ</a>
+                <a href="CongThuc.aspx">Công Thức</a>
+                <a href="DangNhap.aspx">Đăng Nhập</a>
+                <a href="DangKy.aspx">Đăng Ký</a>
+            </nav>
+        </header>
+        
+        <!-- Main Content -->
+        <div class="container">
+            <h2 class="section-title">Khám phá công thức mới nhất</h2>
+            
+            <asp:Repeater ID="RepeaterRecipes" runat="server">
+                <HeaderTemplate>
+                    <div class="recipe-grid">
+                </HeaderTemplate>
+                
+                <ItemTemplate>
+                    <div class="recipe-card">                      
+                        <img src='Images/<%# Eval("image_url") %>' alt='<%# Eval("title") %>' 
+                             onerror="this.onerror=null;this.src='https://placehold.co/600x400/e57373/FFFFFF?text=Ảnh+Món+Ăn';" />
+                        
+                        <div class="recipe-card-content">
+                            <h3><%# Eval("title") %></h3>
+                            <p><%# Eval("description") %></p>
+                            <a href='ChiTietCongThuc.aspx?id=<%# Eval("recipe_id") %>' class="btn-view">Xem chi tiết</a>
+                        </div>
+                    </div>
+                </ItemTemplate>
+
+                <FooterTemplate>
+                    </div>
+                </FooterTemplate>
+            </asp:Repeater>
+            
+            <asp:Label ID="lblNoRecipes" runat="server" Text="Chưa có công thức nào được chia sẻ." Visible="false" CssClass="section-title" ForeColor="Gray"></asp:Label>
+
+        </div>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; <%= DateTime.Now.Year %> Bếp của Nhi. Phát triển bởi Nguyễn Thị Hồng Nhi.</p>
+        </footer>
+    </form>
+</body>
+</html>
+Trang Trangchu.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB
+{
+    public partial class Trangchu : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            if (!IsPostBack)
+            {
+                LoadLatestRecipes();
+            }
+        }
+        private void LoadLatestRecipes()
+        {
+           
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+
+           
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                
+                string query = @"SELECT TOP 6 recipe_id, title, description, image_url 
+                                 FROM Recipes 
+                                 ORDER BY created_at DESC";
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    try
+                    {
+                        con.Open();
+
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+
+                        if (dt.Rows.Count > 0)
+                        {
+                            RepeaterRecipes.DataSource = dt;
+                            RepeaterRecipes.DataBind();
+                        }
+                        else
+                        {
+                            lblNoRecipes.Visible = true;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        
+                        System.Diagnostics.Debug.WriteLine("Lỗi khi tải công thức: " + ex.Message);
+                        lblNoRecipes.Text = "Đã có lỗi xảy ra khi tải dữ liệu. Vui lòng thử lại sau.";
+                        lblNoRecipes.Visible = true;
+                    }
+                }
+            }
+        }
+    }
+}
+Trang webconfig
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  For more information on how to configure your ASP.NET application, please visit
+  https://go.microsoft.com/fwlink/?LinkId=169433
+  -->
+<configuration>
+	<connectionStrings>
+		<add name="CongThucDB" connectionString="Data Source=.;Initial Catalog=CongThucNauAnDB;Integrated Security=True" providerName="System.Data.SqlClient"/>
+	</connectionStrings>
+	<appSettings>
+		<add key="ValidationSettings:UnobtrusiveValidationMode" value="None" />
+	</appSettings>
+  <system.web>
+    <compilation debug="true" targetFramework="4.7.2" />
+    <httpRuntime targetFramework="4.7.2" />
+  </system.web>
+  <system.codedom>
+    <compilers>
+      <compiler language="c#;cs;csharp" extension=".cs" type="Microsoft.CodeDom.Providers.DotNetCompilerPlatform.CSharpCodeProvider, Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" warningLevel="4" compilerOptions="/langversion:default /nowarn:1659;1699;1701" />
+      <compiler language="vb;vbs;visualbasic;vbscript" extension=".vb" type="Microsoft.CodeDom.Providers.DotNetCompilerPlatform.VBCodeProvider, Microsoft.CodeDom.Providers.DotNetCompilerPlatform, Version=2.0.1.0, Culture=neutral, PublicKeyToken=31bf3856ad364e35" warningLevel="4" compilerOptions="/langversion:default /nowarn:41008 /define:_MYTYPE=\&quot;Web\&quot; /optionInfer+" />
+    </compilers>
+  </system.codedom>
+</configuration>
+Phan admin
+Trang Dashboard.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="Dashboard.aspx.cs" Inherits="CongThucNauAnDB.Admin.Dashboard" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Khu vực quản trị - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            background-color: #f4f7f6;
+        }
+
+        .admin-wrapper {
+            display: flex;
+        }
+
+        /* --- Sidebar Menu --- */
+        .sidebar {
+            width: 250px;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            background-color: #34495e;
+        }
+
+        .sidebar-header h2 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .sidebar-header h2 span {
+            font-weight: 300;
+        }
+
+        .admin-nav {
+            list-style-type: none;
+            padding: 0;
+            margin: 20px 0;
+            flex-grow: 1;
+        }
+
+        .admin-nav li a {
+            display: block;
+            color: #ecf0f1;
+            text-decoration: none;
+            padding: 15px 25px;
+            transition: background-color 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .admin-nav li a:hover, .admin-nav li.active a {
+            background-color: #34495e;
+            border-left-color: #e57373;
+        }
+        
+        .admin-nav li a .fa {
+            margin-right: 15px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .user-panel {
+            padding: 20px;
+            border-top: 1px solid #34495e;
+            text-align: center;
+        }
+        
+        .user-panel .logout-btn {
+            color: #e57373;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        /* --- Main Content --- */
+        .main-content {
+            flex-grow: 1;
+            padding: 30px;
+        }
+
+        .content-header h1 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        /* --- Dashboard Cards --- */
+        .stat-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+        }
+
+        .card {
+            background-color: #fff;
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+        }
+        
+        .card .icon {
+            font-size: 40px;
+            margin-right: 20px;
+            padding: 15px;
+            border-radius: 50%;
+            color: #fff;
+        }
+
+        .card.users .icon { background-color: #3498db; }
+        .card.pending .icon { background-color: #f1c40f; }
+        .card.recipes .icon { background-color: #e74c3c; }
+
+        .card .info h4 {
+            margin: 0 0 5px 0;
+            color: #7f8c8d;
+            font-size: 14px;
+            font-weight: normal;
+        }
+        .card .info .number {
+            margin: 0;
+            font-size: 32px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div class="admin-wrapper">
+            <!-- Sidebar Menu -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Bếp <span>của Nhi</span></h2>
+                </div>
+                <ul class="admin-nav">
+                    <li class="active"><a href="Dashboard.aspx"><i class="fa fa-tachometer-alt"></i>Tổng quan</a></li>
+                    <li><a href="QuanLyTaiKhoan.aspx"><i class="fa fa-users"></i>Quản lý tài khoản</a></li>
+                    <li><a href="QuanLyToanBoCongThuc.aspx"><i class="fa fa-book-open"></i>Quản lý công thức</a></li>
+                    <li><a href="QuanLyToanBoNhom.aspx"><i class="fa fa-layer-group"></i>Quản lý nhóm</a></li>
+                </ul>
+                <div class="user-panel">
+                    <asp:Label ID="lblAdminName" runat="server"></asp:Label>
+                    <br />
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                    | <a href="../TrangChu.aspx" class="logout-btn">Về trang chủ</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h1>Bảng điều khiển</h1>
+                </div>
+
+                <div class="stat-cards">
+                    <!-- Card Tổng số tài khoản -->
+                    <div class="card users">
+                        <div class="icon"><i class="fa fa-users"></i></div>
+                        <div class="info">
+                            <h4>Tổng số tài khoản</h4>
+                            <asp:Label ID="lblTotalUsers" runat="server" Text="0" CssClass="number"></asp:Label>
+                        </div>
+                    </div>
+
+                    <!-- Card Tài khoản chờ duyệt -->
+                    <div class="card pending">
+                        <div class="icon"><i class="fa fa-user-clock"></i></div>
+                        <div class="info">
+                            <h4>Tài khoản chờ duyệt</h4>
+                            <asp:Label ID="lblPendingUsers" runat="server" Text="0" CssClass="number"></asp:Label>
+                        </div>
+                    </div>
+
+                    <!-- Card Tổng số công thức -->
+                    <div class="card recipes">
+                        <div class="icon"><i class="fa fa-book-open"></i></div>
+                        <div class="info">
+                            <h4>Tổng số công thức</h4>
+                            <asp:Label ID="lblTotalRecipes" runat="server" Text="0" CssClass="number"></asp:Label>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </form>
+</body>
+</html>
+Trang Dashboard.aspx.cs
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB.Admin
+{
+    public partial class Dashboard : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // *** BẢO VỆ TRANG ***
+            // Kiểm tra quyền Admin ngay khi tải trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "1")
+            {
+                // Nếu không phải Admin, đá về trang đăng nhập
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                // Hiển thị tên Admin và tải các thống kê
+                lblAdminName.Text = "Xin chào, " + Session["FullName"];
+                LoadDashboardStats();
+            }
+        }
+
+        // Hàm đăng xuất
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/DangNhap.aspx");
+        }
+
+        // Hàm tải các con số thống kê
+        private void LoadDashboardStats()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                try
+                {
+                    con.Open();
+
+                    // Lấy tổng số người dùng
+                    using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Users", con))
+                    {
+                        lblTotalUsers.Text = cmd.ExecuteScalar().ToString();
+                    }
+
+                    // Lấy số người dùng đang chờ duyệt
+                    using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Users WHERE status = 'pending'", con))
+                    {
+                        lblPendingUsers.Text = cmd.ExecuteScalar().ToString();
+                    }
+
+                    // Lấy tổng số công thức
+                    using (SqlCommand cmd = new SqlCommand("SELECT COUNT(*) FROM Recipes", con))
+                    {
+                        lblTotalRecipes.Text = cmd.ExecuteScalar().ToString();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Lỗi khi tải thống kê Dashboard: " + ex.Message);
+                }
+            }
+        }
+    }
+}
+Trang QuanLyTaiKhoan.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyTaiKhoan.aspx.cs" Inherits="CongThucNauAnDB.Admin.QuanLyTaiKhoan" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý tài khoản - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; }
+        .admin-wrapper { display: flex; }
+        .sidebar { width: 250px; background-color: #2c3e50; color: #ecf0f1; min-height: 100vh; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; background-color: #34495e; }
+        .sidebar-header h2 { margin: 0; font-size: 24px; }
+        .sidebar-header h2 span { font-weight: 300; }
+        .admin-nav { list-style-type: none; padding: 0; margin: 20px 0; flex-grow: 1; }
+        .admin-nav li a { display: block; color: #ecf0f1; text-decoration: none; padding: 15px 25px; transition: background-color 0.3s; border-left: 3px solid transparent; }
+        .admin-nav li a:hover, .admin-nav li.active a { background-color: #34495e; border-left-color: #e57373; }
+        .admin-nav li a .fa { margin-right: 15px; width: 20px; text-align: center; }
+        .user-panel { padding: 20px; border-top: 1px solid #34495e; text-align: center; }
+        .user-panel .logout-btn { color: #e57373; text-decoration: none; font-weight: bold; }
+        .main-content { flex-grow: 1; padding: 30px; }
+        .content-header h1 { margin-top: 0; color: #333; }
+        
+        /* --- CSS cho GridView --- */
+        .grid-view {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        .grid-view th {
+            background-color: #34495e;
+            color: #fff;
+            padding: 12px 15px;
+            text-align: left;
+        }
+        .grid-view td {
+            padding: 10px 15px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        .grid-view tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .grid-view .ddl-status, .grid-view .ddl-role {
+            padding: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .grid-view .btn-update {
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .grid-view .btn-update:hover {
+            background-color: #229954;
+        }
+
+        .message {
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            color: #fff;
+        }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div class="admin-wrapper">
+            <!-- Sidebar Menu -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Bếp <span>của Nhi</span></h2>
+                </div>
+                <ul class="admin-nav">
+                    <li><a href="Dashboard.aspx"><i class="fa fa-tachometer-alt"></i>Tổng quan</a></li>
+                    <li class="active"><a href="QuanLyTaiKhoan.aspx"><i class="fa fa-users"></i>Quản lý tài khoản</a></li>
+                    <li><a href="QuanLyToanBoCongThuc.aspx"><i class="fa fa-book-open"></i>Quản lý công thức</a></li>
+                    <li><a href="QuanLyToanBoNhom.aspx"><i class="fa fa-layer-group"></i>Quản lý nhóm</a></li>
+                </ul>
+                <div class="user-panel">
+                    <asp:Label ID="lblAdminName" runat="server"></asp:Label><br />
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                    | <a href="../TrangChu.aspx" class="logout-btn">Về trang chủ</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h1>Quản lý tài khoản người dùng</h1>
+                </div>
+                
+                <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+
+                <asp:GridView ID="gvUsers" runat="server" AutoGenerateColumns="false" 
+                    DataKeyNames="user_id" CssClass="grid-view"
+                    OnRowDataBound="gvUsers_RowDataBound"
+                    OnRowCommand="gvUsers_RowCommand">
+                    <Columns>
+                        <asp:BoundField DataField="user_id" HeaderText="ID" />
+                        <asp:BoundField DataField="full_name" HeaderText="Họ và tên" />
+                        <asp:BoundField DataField="username" HeaderText="Tên đăng nhập" />
+                        <asp:BoundField DataField="email" HeaderText="Email" />
+                        
+                        <asp:TemplateField HeaderText="Vai trò">
+                            <ItemTemplate>
+                                <asp:DropDownList ID="ddlRole" runat="server" CssClass="ddl-role"></asp:DropDownList>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+
+                        <asp:TemplateField HeaderText="Trạng thái">
+                            <ItemTemplate>
+                                <asp:DropDownList ID="ddlStatus" runat="server" CssClass="ddl-status">
+                                    <asp:ListItem Value="pending">Chờ duyệt</asp:ListItem>
+                                    <asp:ListItem Value="approved">Đã duyệt</asp:ListItem>
+                                    <asp:ListItem Value="banned">Đã khóa</asp:ListItem>
+                                </asp:DropDownList>
+                            </ItemTemplate>
+                        </asp:TemplateField>
+
+                        <asp:TemplateField HeaderText="Hành động">
+                            <ItemTemplate>
+                                <asp:Button ID="btnUpdate" runat="server" Text="Cập nhật" CssClass="btn-update" 
+                                    CommandName="UpdateUser" CommandArgument='<%# Eval("user_id") %>' />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </main>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyTaiKhoan.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Admin
+{
+    public partial class QuanLyTaiKhoan : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "1")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                lblAdminName.Text = "Xin chào, " + Session["FullName"];
+                BindUsersGrid();
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/DangNhap.aspx");
+        }
+
+        // Tải và hiển thị dữ liệu người dùng lên GridView
+        private void BindUsersGrid()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Lấy tất cả user trừ chính admin đang đăng nhập
+                string query = "SELECT * FROM Users WHERE user_id != @AdminId ORDER BY user_id";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@AdminId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvUsers.DataSource = dt;
+                        gvUsers.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Sự kiện này chạy cho mỗi dòng khi GridView được tạo
+        protected void gvUsers_RowDataBound(object sender, GridViewRowEventArgs e)
+        {
+            if (e.Row.RowType == DataControlRowType.DataRow)
+            {
+                // Tìm các DropDownList trong dòng hiện tại
+                DropDownList ddlStatus = (DropDownList)e.Row.FindControl("ddlStatus");
+                DropDownList ddlRole = (DropDownList)e.Row.FindControl("ddlRole");
+
+                // Lấy dữ liệu của dòng hiện tại
+                DataRowView drv = (DataRowView)e.Row.DataItem;
+                string currentStatus = drv["status"].ToString();
+                string currentRoleId = drv["role_id"].ToString();
+
+                // Thiết lập giá trị được chọn cho DropDownList Trạng thái
+                ddlStatus.SelectedValue = currentStatus;
+
+                // Tải dữ liệu cho DropDownList Vai trò
+                if (ddlRole != null)
+                {
+                    ddlRole.DataSource = GetRoles();
+                    ddlRole.DataTextField = "role_name";
+                    ddlRole.DataValueField = "role_id";
+                    ddlRole.DataBind();
+                    ddlRole.SelectedValue = currentRoleId;
+                }
+            }
+        }
+
+        // Xử lý khi nút "Cập nhật" được nhấn
+        protected void gvUsers_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "UpdateUser")
+            {
+                // Lấy index của dòng được nhấn
+                int rowIndex = Convert.ToInt32(e.CommandArgument);
+                GridViewRow row = gvUsers.Rows[rowIndex - 1]; // GridView index is 0-based
+
+                // Lấy user_id từ DataKeys của GridView
+                int userId = Convert.ToInt32(gvUsers.DataKeys[row.RowIndex].Value);
+
+                // Tìm các control trong dòng đó
+                DropDownList ddlRole = (DropDownList)row.FindControl("ddlRole");
+                DropDownList ddlStatus = (DropDownList)row.FindControl("ddlStatus");
+
+                // Lấy giá trị mới
+                int newRoleId = Convert.ToInt32(ddlRole.SelectedValue);
+                string newStatus = ddlStatus.SelectedValue;
+
+                // Cập nhật vào database
+                UpdateUser(userId, newRoleId, newStatus);
+            }
+        }
+
+        // Hàm cập nhật thông tin người dùng
+        private void UpdateUser(int userId, int roleId, string status)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "UPDATE Users SET role_id = @RoleId, status = @Status WHERE user_id = @UserId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@RoleId", roleId);
+                    cmd.Parameters.AddWithValue("@Status", status);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        ShowMessage("Cập nhật thành công!", false);
+                        BindUsersGrid(); // Tải lại GridView để thấy thay đổi
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi cập nhật: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Hàm lấy danh sách các vai trò từ DB
+        private DataTable GetRoles()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Không lấy vai trò Admin để tránh tự hạ quyền
+                string query = "SELECT * FROM Roles WHERE role_id != 1";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    return dt;
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang QuanLyToanBoCongThuc.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyToanBoCongThuc.aspx.cs" Inherits="CongThucNauAnDB.Admin.QuanLyToanBoCongThuc" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý công thức - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; }
+        .admin-wrapper { display: flex; }
+        .sidebar { width: 250px; background-color: #2c3e50; color: #ecf0f1; min-height: 100vh; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; background-color: #34495e; }
+        .sidebar-header h2 { margin: 0; font-size: 24px; }
+        .sidebar-header h2 span { font-weight: 300; }
+        .admin-nav { list-style-type: none; padding: 0; margin: 20px 0; flex-grow: 1; }
+        .admin-nav li a { display: block; color: #ecf0f1; text-decoration: none; padding: 15px 25px; transition: background-color 0.3s; border-left: 3px solid transparent; }
+        .admin-nav li a:hover, .admin-nav li.active a { background-color: #34495e; border-left-color: #e57373; }
+        .admin-nav li a .fa { margin-right: 15px; width: 20px; text-align: center; }
+        .user-panel { padding: 20px; border-top: 1px solid #34495e; text-align: center; }
+        .user-panel .logout-btn { color: #e57373; text-decoration: none; font-weight: bold; }
+        .main-content { flex-grow: 1; padding: 30px; }
+        .content-header h1 { margin-top: 0; color: #333; }
+        
+        /* --- CSS cho GridView --- */
+        .grid-view { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .grid-view th { background-color: #34495e; color: #fff; padding: 12px 15px; text-align: left; }
+        .grid-view td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; }
+        .grid-view tr:nth-child(even) { background-color: #f9f9f9; }
+        .grid-view .btn-delete { background-color: #c0392b; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .grid-view .btn-delete:hover { background-color: #a93226; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div class="admin-wrapper">
+            <!-- Sidebar Menu -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Bếp <span>của Nhi</span></h2>
+                </div>
+                <ul class="admin-nav">
+                    <li><a href="Dashboard.aspx"><i class="fa fa-tachometer-alt"></i>Tổng quan</a></li>
+                    <li><a href="QuanLyTaiKhoan.aspx"><i class="fa fa-users"></i>Quản lý tài khoản</a></li>
+                    <li class="active"><a href="QuanLyToanBoCongThuc.aspx"><i class="fa fa-book-open"></i>Quản lý công thức</a></li>
+                    <li><a href="QuanLyToanBoNhom.aspx"><i class="fa fa-layer-group"></i>Quản lý nhóm</a></li>
+                </ul>
+                <div class="user-panel">
+                    <asp:Label ID="lblAdminName" runat="server"></asp:Label><br />
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                    | <a href="../TrangChu.aspx" class="logout-btn">Về trang chủ</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h1>Quản lý toàn bộ công thức</h1>
+                </div>
+                
+                <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+
+                <asp:GridView ID="gvRecipes" runat="server" AutoGenerateColumns="false" 
+                    DataKeyNames="recipe_id" CssClass="grid-view"
+                    OnRowCommand="gvRecipes_RowCommand">
+                    <Columns>
+                        <asp:BoundField DataField="recipe_id" HeaderText="ID" />
+                        <asp:BoundField DataField="title" HeaderText="Tiêu đề" />
+                        <asp:BoundField DataField="creator_name" HeaderText="Người tạo" />
+                        <asp:BoundField DataField="created_at" HeaderText="Ngày tạo" DataFormatString="{0:dd/MM/yyyy HH:mm}" />
+                        
+                        <asp:TemplateField HeaderText="Hành động">
+                            <ItemTemplate>
+                                <asp:Button ID="btnDelete" runat="server" Text="Xóa" CssClass="btn-delete" 
+                                    CommandName="DeleteRecipe" CommandArgument='<%# Eval("recipe_id") %>' 
+                                    OnClientClick="return confirm('Bạn có chắc chắn muốn xóa công thức này không?');" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </main>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyToanBoCongThuc.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Admin
+{
+    public partial class QuanLyToanBoCongThuc : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "1")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                lblAdminName.Text = "Xin chào, " + Session["FullName"];
+                BindRecipesGrid();
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/DangNhap.aspx");
+        }
+
+        // Tải và hiển thị dữ liệu công thức lên GridView
+        private void BindRecipesGrid()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Dùng LEFT JOIN để lấy cả tên người tạo. Nếu người tạo bị xóa, tên sẽ là NULL.
+                string query = @"SELECT r.recipe_id, r.title, r.created_at, u.full_name as creator_name 
+                                 FROM Recipes r
+                                 LEFT JOIN Users u ON r.creator_id = u.user_id
+                                 ORDER BY r.created_at DESC";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvRecipes.DataSource = dt;
+                        gvRecipes.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nút "Xóa" được nhấn
+        protected void gvRecipes_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "DeleteRecipe")
+            {
+                int recipeId = Convert.ToInt32(e.CommandArgument);
+                DeleteRecipe(recipeId);
+            }
+        }
+
+        // Hàm xóa công thức khỏi database
+        private void DeleteRecipe(int recipeId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "DELETE FROM Recipes WHERE recipe_id = @RecipeId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@RecipeId", recipeId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        ShowMessage("Xóa công thức thành công!", false);
+                        BindRecipesGrid(); // Tải lại GridView để thấy thay đổi
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi xóa công thức: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang QuanLyToanBoNhom.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyToanBoNhom.aspx.cs" Inherits="CongThucNauAnDB.Admin.QuanLyToanBoNhom" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý nhóm - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; }
+        .admin-wrapper { display: flex; }
+        .sidebar { width: 250px; background-color: #2c3e50; color: #ecf0f1; min-height: 100vh; display: flex; flex-direction: column; }
+        .sidebar-header { padding: 20px; text-align: center; background-color: #34495e; }
+        .sidebar-header h2 { margin: 0; font-size: 24px; }
+        .sidebar-header h2 span { font-weight: 300; }
+        .admin-nav { list-style-type: none; padding: 0; margin: 20px 0; flex-grow: 1; }
+        .admin-nav li a { display: block; color: #ecf0f1; text-decoration: none; padding: 15px 25px; transition: background-color 0.3s; border-left: 3px solid transparent; }
+        .admin-nav li a:hover, .admin-nav li.active a { background-color: #34495e; border-left-color: #e57373; }
+        .admin-nav li a .fa { margin-right: 15px; width: 20px; text-align: center; }
+        .user-panel { padding: 20px; border-top: 1px solid #34495e; text-align: center; }
+        .user-panel .logout-btn { color: #e57373; text-decoration: none; font-weight: bold; }
+        .main-content { flex-grow: 1; padding: 30px; }
+        .content-header h1 { margin-top: 0; color: #333; }
+        
+        /* --- CSS cho GridView --- */
+        .grid-view { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .grid-view th { background-color: #34495e; color: #fff; padding: 12px 15px; text-align: left; }
+        .grid-view td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; }
+        .grid-view tr:nth-child(even) { background-color: #f9f9f9; }
+        .grid-view .btn-delete { background-color: #c0392b; color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+        .grid-view .btn-delete:hover { background-color: #a93226; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <div class="admin-wrapper">
+            <!-- Sidebar Menu -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h2>Bếp <span>của Nhi</span></h2>
+                </div>
+                <ul class="admin-nav">
+                    <li><a href="Dashboard.aspx"><i class="fa fa-tachometer-alt"></i>Tổng quan</a></li>
+                    <li><a href="QuanLyTaiKhoan.aspx"><i class="fa fa-users"></i>Quản lý tài khoản</a></li>
+                    <li><a href="QuanLyToanBoCongThuc.aspx"><i class="fa fa-book-open"></i>Quản lý công thức</a></li>
+                    <li class="active"><a href="QuanLyToanBoNhom.aspx"><i class="fa fa-layer-group"></i>Quản lý nhóm</a></li>
+                </ul>
+                <div class="user-panel">
+                    <asp:Label ID="lblAdminName" runat="server"></asp:Label><br />
+                    <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+                    | <a href="../TrangChu.aspx" class="logout-btn">Về trang chủ</a>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <h1>Quản lý toàn bộ nhóm</h1>
+                </div>
+                
+                <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+
+                <asp:GridView ID="gvGroups" runat="server" AutoGenerateColumns="false" 
+                    DataKeyNames="group_id" CssClass="grid-view"
+                    OnRowCommand="gvGroups_RowCommand">
+                    <Columns>
+                        <asp:BoundField DataField="group_id" HeaderText="ID" />
+                        <asp:BoundField DataField="group_name" HeaderText="Tên nhóm" />
+                        <asp:BoundField DataField="owner_name" HeaderText="Người tạo" />
+                        <asp:BoundField DataField="created_at" HeaderText="Ngày tạo" DataFormatString="{0:dd/MM/yyyy HH:mm}" />
+                        
+                        <asp:TemplateField HeaderText="Hành động">
+                            <ItemTemplate>
+                                <asp:Button ID="btnDelete" runat="server" Text="Xóa" CssClass="btn-delete" 
+                                    CommandName="DeleteGroup" CommandArgument='<%# Eval("group_id") %>' 
+                                    OnClientClick="return confirm('Bạn có chắc chắn muốn xóa nhóm này không? Thao tác này sẽ xóa cả thành viên trong nhóm.');" />
+                            </ItemTemplate>
+                        </asp:TemplateField>
+                    </Columns>
+                </asp:GridView>
+            </main>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyToanBoNhom.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Admin
+{
+    public partial class QuanLyToanBoNhom : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "1")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                lblAdminName.Text = "Xin chào, " + Session["FullName"];
+                BindGroupsGrid();
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/DangNhap.aspx");
+        }
+
+        // Tải và hiển thị dữ liệu nhóm lên GridView
+        private void BindGroupsGrid()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Dùng LEFT JOIN để lấy tên người tạo nhóm
+                string query = @"SELECT g.group_id, g.group_name, g.created_at, u.full_name as owner_name 
+                                 FROM [Groups] g
+                                 LEFT JOIN Users u ON g.owner_id = u.user_id
+                                 ORDER BY g.created_at DESC";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvGroups.DataSource = dt;
+                        gvGroups.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nút "Xóa" được nhấn
+        protected void gvGroups_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "DeleteGroup")
+            {
+                int groupId = Convert.ToInt32(e.CommandArgument);
+                DeleteGroup(groupId);
+            }
+        }
+
+        // Hàm xóa nhóm khỏi database
+        // Do đã thiết lập ON DELETE CASCADE, khi xóa nhóm, các bản ghi trong GroupMembers cũng sẽ tự động bị xóa.
+        private void DeleteGroup(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "DELETE FROM [Groups] WHERE group_id = @GroupId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        ShowMessage("Xóa nhóm thành công!", false);
+                        BindGroupsGrid(); // Tải lại GridView để thấy thay đổi
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi xóa nhóm: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }	
+}
+Phan cho Sharer
+Trang QuanLyCongThuc.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyCongThuc.aspx.cs" Inherits="CongThucNauAnDB.Sharer.QuanLyCongThuc" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý công thức của tôi - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-title { font-size: 24px; font-weight: 600; color: #333; }
+        .btn-add-new { background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: 500; }
+        .btn-add-new .fa { margin-right: 8px; }
+
+        .grid-view { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .grid-view th { background-color: #34495e; color: #fff; padding: 12px 15px; text-align: left; }
+        .grid-view td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; vertical-align: middle; }
+        .grid-view .btn-action { color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 5px; }
+        .btn-edit { background-color: #3498db; }
+        .btn-delete { background-color: #c0392b; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <header class="header">
+            <a href="../TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="QuanLyCongThuc.aspx" class="active">Quản lý công thức</a>
+                <a href="QuanLyNhom.aspx">Quản lý nhóm</a>
+                <a href="../CongThucCuaToi.aspx">Về trang thành viên</a>
+                <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Công thức của bạn</h1>
+                <a href="ThemSuaCongThuc.aspx" class="btn-add-new"><i class="fa fa-plus"></i>Thêm công thức mới</a>
+            </div>
+            
+            <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+
+            <asp:GridView ID="gvMyRecipes" runat="server" AutoGenerateColumns="false" 
+                DataKeyNames="recipe_id" CssClass="grid-view"
+                OnRowCommand="gvMyRecipes_RowCommand"
+                EmptyDataText="Bạn chưa tạo công thức nào.">
+                <Columns>
+                    <asp:BoundField DataField="recipe_id" HeaderText="ID" ItemStyle-Width="5%" />
+                    <asp:BoundField DataField="title" HeaderText="Tiêu đề" />
+                    <asp:BoundField DataField="created_at" HeaderText="Ngày tạo" DataFormatString="{0:dd/MM/yyyy}" ItemStyle-Width="15%" />
+                    
+                    <asp:TemplateField HeaderText="Hành động" ItemStyle-Width="20%">
+                        <ItemTemplate>
+                            <a href='ThemSuaCongThuc.aspx?id=<%# Eval("recipe_id") %>' class="btn-action btn-edit">Sửa</a>
+                            <asp:LinkButton ID="btnDelete" runat="server" Text="Xóa" CssClass="btn-action btn-delete" 
+                                CommandName="DeleteRecipe" CommandArgument='<%# Eval("recipe_id") %>' 
+                                OnClientClick="return confirm('Bạn có chắc chắn muốn xóa công thức này không?');" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+            </asp:GridView>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyCongThuc.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Sharer
+{
+    public partial class QuanLyCongThuc : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang: Yêu cầu đăng nhập và phải là Sharer (role_id = 2)
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "2")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                BindMyRecipesGrid();
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        // Tải và hiển thị công thức của chính người dùng này
+        private void BindMyRecipesGrid()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT recipe_id, title, created_at FROM Recipes WHERE creator_id = @CreatorId ORDER BY created_at DESC";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@CreatorId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvMyRecipes.DataSource = dt;
+                        gvMyRecipes.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nút "Xóa" được nhấn
+        protected void gvMyRecipes_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "DeleteRecipe")
+            {
+                int recipeId = Convert.ToInt32(e.CommandArgument);
+                DeleteRecipe(recipeId);
+            }
+        }
+
+        // Hàm xóa công thức
+        private void DeleteRecipe(int recipeId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Thêm một bước kiểm tra để đảm bảo người dùng chỉ có thể xóa công thức của chính họ
+                string query = "DELETE FROM Recipes WHERE recipe_id = @RecipeId AND creator_id = @CreatorId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@RecipeId", recipeId);
+                    cmd.Parameters.AddWithValue("@CreatorId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            ShowMessage("Xóa công thức thành công!", false);
+                        }
+                        else
+                        {
+                            ShowMessage("Không thể xóa công thức này hoặc bạn không có quyền.", true);
+                        }
+                        BindMyRecipesGrid(); // Tải lại GridView
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi xóa công thức: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang QuanLyNhom.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyNhom.aspx.cs" Inherits="CongThucNauAnDB.Sharer.QuanLyNhom" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý nhóm - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .page-title { font-size: 24px; font-weight: 600; color: #333; }
+        .btn-add-new { background-color: #27ae60; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: 500; }
+        .btn-add-new .fa { margin-right: 8px; }
+
+        .grid-view { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .grid-view th { background-color: #34495e; color: #fff; padding: 12px 15px; text-align: left; }
+        .grid-view td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; vertical-align: middle; }
+        .grid-view .btn-action { color: white; border: none; padding: 8px 12px; border-radius: 4px; cursor: pointer; text-decoration: none; display: inline-block; margin-right: 5px; font-size: 14px; }
+        .btn-members { background-color: #2980b9; }
+        .btn-edit { background-color: #f39c12; }
+        .btn-delete { background-color: #c0392b; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <header class="header">
+            <a href="../TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="QuanLyCongThuc.aspx">Quản lý công thức</a>
+                <a href="QuanLyNhom.aspx" class="active">Quản lý nhóm</a>
+                <a href="../CongThucCuaToi.aspx">Về trang thành viên</a>
+                <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <h1 class="page-title">Nhóm của bạn</h1>
+                <%-- Trang ThemSuaNhom.aspx sẽ được tạo ở bước tiếp theo --%>
+                <a href="ThemSuaNhom.aspx" class="btn-add-new"><i class="fa fa-plus"></i>Tạo nhóm mới</a>
+            </div>
+            
+            <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+
+            <asp:GridView ID="gvMyGroups" runat="server" AutoGenerateColumns="false" 
+                DataKeyNames="group_id" CssClass="grid-view"
+                OnRowCommand="gvMyGroups_RowCommand"
+                EmptyDataText="Bạn chưa tạo nhóm nào.">
+                <Columns>
+                    <asp:BoundField DataField="group_id" HeaderText="ID" ItemStyle-Width="5%" />
+                    <asp:BoundField DataField="group_name" HeaderText="Tên nhóm" />
+                    <asp:BoundField DataField="MemberCount" HeaderText="Số thành viên" ItemStyle-Width="15%" ItemStyle-HorizontalAlign="Center" />
+                    <asp:BoundField DataField="created_at" HeaderText="Ngày tạo" DataFormatString="{0:dd/MM/yyyy}" ItemStyle-Width="15%" />
+                    
+                    <asp:TemplateField HeaderText="Hành động" ItemStyle-Width="30%">
+                        <ItemTemplate>
+                            <%-- Trang QuanLyThanhVienNhom.aspx sẽ được tạo ở bước tiếp theo --%>
+                            <a href='QuanLyThanhVienNhom.aspx?id=<%# Eval("group_id") %>' class="btn-action btn-members">Thành viên</a>
+                            <a href='ThemSuaNhom.aspx?id=<%# Eval("group_id") %>' class="btn-action btn-edit">Sửa</a>
+                            <asp:LinkButton ID="btnDelete" runat="server" Text="Xóa" CssClass="btn-action btn-delete" 
+                                CommandName="DeleteGroup" CommandArgument='<%# Eval("group_id") %>' 
+                                OnClientClick="return confirm('Bạn có chắc chắn muốn xóa nhóm này không?');" />
+                        </ItemTemplate>
+                    </asp:TemplateField>
+                </Columns>
+            </asp:GridView>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyNhom.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Sharer
+{
+    public partial class QuanLyNhom : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang: Yêu cầu đăng nhập và phải là Sharer (role_id = 2)
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "2")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                BindMyGroupsGrid();
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        // Tải và hiển thị nhóm của chính người dùng này
+        private void BindMyGroupsGrid()
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Dùng subquery để đếm số thành viên trong mỗi nhóm
+                string query = @"SELECT g.*, (SELECT COUNT(*) FROM GroupMembers gm WHERE gm.group_id = g.group_id) as MemberCount 
+                                 FROM [Groups] g 
+                                 WHERE g.owner_id = @OwnerId 
+                                 ORDER BY g.created_at DESC";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@OwnerId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataAdapter da = new SqlDataAdapter(cmd);
+                        DataTable dt = new DataTable();
+                        da.Fill(dt);
+                        gvMyGroups.DataSource = dt;
+                        gvMyGroups.DataBind();
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nút "Xóa" được nhấn
+        protected void gvMyGroups_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "DeleteGroup")
+            {
+                int groupId = Convert.ToInt32(e.CommandArgument);
+                DeleteGroup(groupId);
+            }
+        }
+
+        // Hàm xóa nhóm
+        private void DeleteGroup(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Kiểm tra để đảm bảo người dùng chỉ có thể xóa nhóm của chính họ
+                string query = "DELETE FROM [Groups] WHERE group_id = @GroupId AND owner_id = @OwnerId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    cmd.Parameters.AddWithValue("@OwnerId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        int rowsAffected = cmd.ExecuteNonQuery();
+                        if (rowsAffected > 0)
+                        {
+                            ShowMessage("Xóa nhóm thành công!", false);
+                        }
+                        else
+                        {
+                            ShowMessage("Không thể xóa nhóm này hoặc bạn không có quyền.", true);
+                        }
+                        BindMyGroupsGrid(); // Tải lại GridView
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi xóa nhóm: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang QuanLyThanhVienNhom.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="QuanLyThanhVienNhom.aspx.cs" Inherits="CongThucNauAnDB.Sharer.QuanLyThanhVienNhom" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Quản lý thành viên nhóm - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 1200px; margin: 40px auto; padding: 0 20px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        
+        .page-header { margin-bottom: 25px; }
+        .page-title { font-size: 24px; font-weight: 600; color: #333; }
+        .page-title .group-name { color: #c62828; }
+
+        .grid-container { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+        .grid-section h2 { font-size: 20px; font-weight: 500; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+
+        .grid-view { width: 100%; border-collapse: collapse; background-color: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        .grid-view th { background-color: #34495e; color: #fff; padding: 12px 15px; text-align: left; }
+        .grid-view td { padding: 10px 15px; border-bottom: 1px solid #ecf0f1; vertical-align: middle; }
+        .grid-view .btn-action { color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn-add { background-color: #27ae60; }
+        .btn-remove { background-color: #c0392b; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.success { background-color: #27ae60; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <header class="header">
+            <a href="../TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="QuanLyCongThuc.aspx">Quản lý công thức</a>
+                <a href="QuanLyNhom.aspx" class="active">Quản lý nhóm</a>
+                <a href="../CongThucCuaToi.aspx">Về trang thành viên</a>
+                <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="page-header">
+                <%-- *** SỬA LỖI Ở ĐÂY: Dùng asp:Label thay cho asp:Literal *** --%>
+                <h1 class="page-title">Quản lý thành viên cho nhóm: <asp:Label ID="litGroupName" runat="server" CssClass="group-name"></asp:Label></h1>
+            </div>
+            
+            <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+            <asp:HiddenField ID="hfGroupId" runat="server" />
+
+            <div class="grid-container">
+                <div class="grid-section">
+                    <h2>Thành viên hiện tại</h2>
+                    <asp:GridView ID="gvCurrentMembers" runat="server" AutoGenerateColumns="false" 
+                        DataKeyNames="user_id" CssClass="grid-view"
+                        OnRowCommand="gvCurrentMembers_RowCommand"
+                        EmptyDataText="Chưa có thành viên nào trong nhóm.">
+                        <Columns>
+                            <asp:BoundField DataField="full_name" HeaderText="Họ và tên" />
+                            <asp:BoundField DataField="email" HeaderText="Email" />
+                            <asp:TemplateField HeaderText="Hành động" ItemStyle-Width="20%">
+                                <ItemTemplate>
+                                    <asp:Button ID="btnRemove" runat="server" Text="Xóa" CssClass="btn-action btn-remove" 
+                                        CommandName="RemoveUser" CommandArgument='<%# Eval("user_id") %>' />
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                        </Columns>
+                    </asp:GridView>
+                </div>
+                <div class="grid-section">
+                    <h2>Thêm thành viên mới</h2>
+                    <asp:GridView ID="gvAvailableUsers" runat="server" AutoGenerateColumns="false" 
+                        DataKeyNames="user_id" CssClass="grid-view"
+                        OnRowCommand="gvAvailableUsers_RowCommand"
+                        EmptyDataText="Không có người dùng nào để thêm.">
+                        <Columns>
+                            <asp:BoundField DataField="full_name" HeaderText="Họ và tên" />
+                            <asp:BoundField DataField="email" HeaderText="Email" />
+                            <asp:TemplateField HeaderText="Hành động" ItemStyle-Width="20%">
+                                <ItemTemplate>
+                                    <asp:Button ID="btnAdd" runat="server" Text="Thêm" CssClass="btn-action btn-add" 
+                                        CommandName="AddUser" CommandArgument='<%# Eval("user_id") %>' />
+                                </ItemTemplate>
+                            </asp:TemplateField>
+                        </Columns>
+                    </asp:GridView>
+                </div>
+            </div>
+            <div style="margin-top: 20px;">
+                <a href="QuanLyNhom.aspx">&larr; Quay lại danh sách nhóm</a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>
+Trang QuanLyThanhVienNhom.aspx.cs
+using System;
+using System.Data;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.Web.UI.WebControls;
+
+namespace CongThucNauAnDB.Sharer
+{
+    public partial class QuanLyThanhVienNhom : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "2")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                if (!string.IsNullOrEmpty(Request.QueryString["id"]))
+                {
+                    int groupId = Convert.ToInt32(Request.QueryString["id"]);
+                    hfGroupId.Value = groupId.ToString();
+                    // Kiểm tra xem người dùng này có phải chủ nhóm không
+                    if (VerifyGroupOwner(groupId))
+                    {
+                        BindCurrentMembersGrid(groupId);
+                        BindAvailableUsersGrid(groupId);
+                    }
+                    else
+                    {
+                        // Nếu không phải chủ, không cho xem
+                        Response.Redirect("QuanLyNhom.aspx");
+                    }
+                }
+                else
+                {
+                    Response.Redirect("QuanLyNhom.aspx");
+                }
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        // Tải danh sách thành viên hiện tại
+        private void BindCurrentMembersGrid(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = @"SELECT u.user_id, u.full_name, u.email 
+                                 FROM Users u INNER JOIN GroupMembers gm ON u.user_id = gm.user_id 
+                                 WHERE gm.group_id = @GroupId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    gvCurrentMembers.DataSource = dt;
+                    gvCurrentMembers.DataBind();
+                }
+            }
+        }
+
+        // Tải danh sách người dùng có thể thêm vào nhóm
+        private void BindAvailableUsersGrid(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = @"SELECT user_id, full_name, email FROM Users 
+                                 WHERE status = 'approved' AND user_id NOT IN 
+                                 (SELECT user_id FROM GroupMembers WHERE group_id = @GroupId)";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    SqlDataAdapter da = new SqlDataAdapter(cmd);
+                    DataTable dt = new DataTable();
+                    da.Fill(dt);
+                    gvAvailableUsers.DataSource = dt;
+                    gvAvailableUsers.DataBind();
+                }
+            }
+        }
+
+        // Xử lý nút Xóa thành viên
+        protected void gvCurrentMembers_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "RemoveUser")
+            {
+                int userIdToRemove = Convert.ToInt32(e.CommandArgument);
+                int groupId = Convert.ToInt32(hfGroupId.Value);
+                RemoveUserFromGroup(userIdToRemove, groupId);
+            }
+        }
+
+        // Xử lý nút Thêm thành viên
+        protected void gvAvailableUsers_RowCommand(object sender, GridViewCommandEventArgs e)
+        {
+            if (e.CommandName == "AddUser")
+            {
+                int userIdToAdd = Convert.ToInt32(e.CommandArgument);
+                int groupId = Convert.ToInt32(hfGroupId.Value);
+                AddUserToGroup(userIdToAdd, groupId);
+            }
+        }
+
+        private void AddUserToGroup(int userId, int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "INSERT INTO GroupMembers (group_id, user_id) VALUES (@GroupId, @UserId)";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        ShowMessage("Thêm thành viên thành công!", false);
+                        // Tải lại cả 2 grid
+                        BindCurrentMembersGrid(groupId);
+                        BindAvailableUsersGrid(groupId);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi thêm thành viên: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void RemoveUserFromGroup(int userId, int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "DELETE FROM GroupMembers WHERE group_id = @GroupId AND user_id = @UserId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    cmd.Parameters.AddWithValue("@UserId", userId);
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        ShowMessage("Xóa thành viên thành công!", false);
+                        // Tải lại cả 2 grid
+                        BindCurrentMembersGrid(groupId);
+                        BindAvailableUsersGrid(groupId);
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi xóa thành viên: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Hàm xác thực chủ sở hữu nhóm
+        private bool VerifyGroupOwner(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query = "SELECT owner_id, group_name FROM [Groups] WHERE group_id = @GroupId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            litGroupName.Text = reader["group_name"].ToString();
+                            int ownerId = Convert.ToInt32(reader["owner_id"]);
+                            return ownerId == Convert.ToInt32(Session["UserId"]);
+                        }
+                        return false;
+                    }
+                    catch { return false; }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang ThemSuaCongThuc.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ThemSuaCongThuc.aspx.cs" Inherits="CongThucNauAnDB.Sharer.ThemSuaCongThuc" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Thêm/Sửa công thức - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        
+        .form-container { background-color: #fff; padding: 30px 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .form-container h1 { margin-top: 0; margin-bottom: 25px; color: #333; font-weight: 600; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        .input-group .form-control { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .input-group textarea.form-control { min-height: 120px; resize: vertical; }
+        
+        .image-preview { margin-top: 10px; max-width: 200px; border-radius: 5px; }
+
+        .btn-submit { padding: 12px 25px; font-size: 16px; font-weight: bold; color: #fff; background-color: #27ae60; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        .btn-submit:hover { background-color: #229954; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server" enctype="multipart/form-data">
+        <header class="header">
+            <a href="../TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="QuanLyCongThuc.aspx" class="active">Quản lý công thức</a>
+                <a href="QuanLyNhom.aspx">Quản lý nhóm</a>
+                <a href="../CongThucCuaToi.aspx">Về trang thành viên</a>
+                <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click">Đăng xuất</asp:LinkButton>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="form-container">
+                <h1><asp:Literal ID="litPageTitle" runat="server">Thêm công thức mới</asp:Literal></h1>
+                
+                <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+                <asp:HiddenField ID="hfRecipeId" runat="server" Value="0" />
+                <asp:HiddenField ID="hfCurrentImage" runat="server" />
+
+                <div class="input-group">
+                    <label for="txtTitle">Tiêu đề công thức</label>
+                    <asp:TextBox ID="txtTitle" runat="server" CssClass="form-control"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label for="txtDescription">Mô tả ngắn (hiển thị công khai)</label>
+                    <asp:TextBox ID="txtDescription" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="3"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label for="txtIngredients">Nguyên liệu (mỗi dòng một nguyên liệu)</label>
+                    <asp:TextBox ID="txtIngredients" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="6"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label for="txtInstructions">Hướng dẫn thực hiện (mỗi dòng một bước)</label>
+                    <asp:TextBox ID="txtInstructions" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="8"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label for="fileImage">Ảnh món ăn</label>
+                    <asp:FileUpload ID="fileImage" runat="server" />
+                    <asp:Image ID="imgPreview" runat="server" CssClass="image-preview" Visible="false" />
+                </div>
+
+                <asp:Button ID="btnSubmit" runat="server" Text="Đăng công thức" CssClass="btn-submit" OnClick="btnSubmit_Click" />
+                <a href="QuanLyCongThuc.aspx" style="margin-left: 15px; color: #555;">Hủy</a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>
+Trang ThemSuaCongThuc.aspx.cs
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+using System.IO;
+
+namespace CongThucNauAnDB.Sharer
+{
+    public partial class ThemSuaCongThuc : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "2")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                // Kiểm tra xem đây là trang Thêm hay Sửa
+                if (!string.IsNullOrEmpty(Request.QueryString["id"]))
+                {
+                    int recipeId = Convert.ToInt32(Request.QueryString["id"]);
+                    hfRecipeId.Value = recipeId.ToString();
+                    LoadRecipeForEdit(recipeId);
+                    litPageTitle.Text = "Chỉnh sửa công thức";
+                    btnSubmit.Text = "Cập nhật";
+                }
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        // Tải dữ liệu công thức vào form để sửa
+        private void LoadRecipeForEdit(int recipeId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Lấy công thức và kiểm tra creator_id để đảm bảo đúng chủ sở hữu
+                string query = "SELECT * FROM Recipes WHERE recipe_id = @RecipeId AND creator_id = @CreatorId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@RecipeId", recipeId);
+                    cmd.Parameters.AddWithValue("@CreatorId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            txtTitle.Text = reader["title"].ToString();
+                            txtDescription.Text = reader["description"].ToString();
+                            txtIngredients.Text = reader["ingredients"].ToString();
+                            txtInstructions.Text = reader["instructions"].ToString();
+
+                            // Lưu ảnh hiện tại và hiển thị preview
+                            hfCurrentImage.Value = reader["image_url"].ToString();
+                            if (!string.IsNullOrEmpty(hfCurrentImage.Value))
+                            {
+                                imgPreview.ImageUrl = "~/Images/" + hfCurrentImage.Value;
+                                imgPreview.Visible = true;
+                            }
+                        }
+                        else
+                        {
+                            // Nếu không tìm thấy (do sai ID hoặc không phải chủ)
+                            ShowMessage("Không tìm thấy công thức hoặc bạn không có quyền sửa.", true);
+                            btnSubmit.Enabled = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nhấn nút Đăng/Cập nhật
+        protected void btnSubmit_Click(object sender, EventArgs e)
+        {
+            int recipeId = Convert.ToInt32(hfRecipeId.Value);
+            string title = txtTitle.Text.Trim();
+            string description = txtDescription.Text.Trim();
+            string ingredients = txtIngredients.Text.Trim();
+            string instructions = txtInstructions.Text.Trim();
+            string imageUrl = hfCurrentImage.Value; // Mặc định là ảnh cũ
+
+            // Xử lý upload ảnh mới
+            if (fileImage.HasFile)
+            {
+                try
+                {
+                    string fileName = Path.GetFileName(fileImage.FileName);
+                    string serverPath = Server.MapPath("~/Images/") + fileName;
+                    fileImage.SaveAs(serverPath);
+                    imageUrl = fileName; // Cập nhật thành tên ảnh mới
+                }
+                catch (Exception ex)
+                {
+                    ShowMessage("Lỗi khi tải ảnh lên: " + ex.Message, true);
+                    return;
+                }
+            }
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query;
+                if (recipeId > 0) // Chế độ Sửa
+                {
+                    query = @"UPDATE Recipes SET 
+                                title = @Title, 
+                                description = @Description, 
+                                ingredients = @Ingredients, 
+                                instructions = @Instructions, 
+                                image_url = @ImageUrl 
+                              WHERE recipe_id = @RecipeId AND creator_id = @CreatorId";
+                }
+                else // Chế độ Thêm
+                {
+                    query = @"INSERT INTO Recipes (creator_id, title, description, ingredients, instructions, image_url) 
+                              VALUES (@CreatorId, @Title, @Description, @Ingredients, @Instructions, @ImageUrl)";
+                }
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@Title", title);
+                    cmd.Parameters.AddWithValue("@Description", description);
+                    cmd.Parameters.AddWithValue("@Ingredients", ingredients);
+                    cmd.Parameters.AddWithValue("@Instructions", instructions);
+                    cmd.Parameters.AddWithValue("@ImageUrl", imageUrl);
+                    cmd.Parameters.AddWithValue("@CreatorId", Session["UserId"]);
+                    if (recipeId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@RecipeId", recipeId);
+                    }
+
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        Response.Redirect("QuanLyCongThuc.aspx");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi lưu dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+Trang ThemSuaNhom.aspx
+<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="ThemSuaNhom.aspx.cs" Inherits="CongThucNauAnDB.Sharer.ThemSuaNhom" %>
+
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head runat="server">
+    <title>Thêm/Sửa nhóm - Bếp của Nhi</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet" />
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; margin: 0; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 800px; margin: 40px auto; padding: 0 20px; }
+        .header { background-color: #fff; padding: 20px 40px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid #e57373; }
+        .header .logo { font-size: 28px; font-weight: bold; color: #c62828; text-decoration: none; }
+        .header .logo span { font-weight: 300; color: #555; }
+        .nav { display: flex; align-items: center; }
+        .nav a, .nav .logout-btn { color: #555; text-decoration: none; font-size: 16px; margin-left: 25px; padding: 8px 12px; border-radius: 5px; transition: background-color 0.3s, color 0.3s; }
+        .nav a:hover, .nav a.active { background-color: #e57373; color: #fff; }
+        .nav .logout-btn { border: none; background: none; cursor: pointer; font-family: inherit; }
+        
+        .form-container { background-color: #fff; padding: 30px 40px; border-radius: 10px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+        .form-container h1 { margin-top: 0; margin-bottom: 25px; color: #333; font-weight: 600; }
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        .input-group .form-control { width: 100%; padding: 12px; font-size: 16px; border: 1px solid #ddd; border-radius: 5px; box-sizing: border-box; }
+        .input-group textarea.form-control { min-height: 120px; resize: vertical; }
+        
+        .btn-submit { padding: 12px 25px; font-size: 16px; font-weight: bold; color: #fff; background-color: #27ae60; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        .btn-submit:hover { background-color: #229954; }
+
+        .message { padding: 10px; margin-bottom: 15px; border-radius: 4px; color: #fff; }
+        .message.error { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+    <form id="form1" runat="server">
+        <header class="header">
+            <a href="../TrangChu.aspx" class="logo">Bếp <span>của Nhi</span></a>
+            <nav class="nav">
+                <a href="QuanLyCongThuc.aspx">Quản lý công thức</a>
+                <a href="QuanLyNhom.aspx" class="active">Quản lý nhóm</a>
+                <a href="../CongThucCuaToi.aspx">Về trang thành viên</a>
+                <asp:LinkButton ID="lnkDangXuat" runat="server" OnClick="lnkDangXuat_Click" CssClass="logout-btn">Đăng xuất</asp:LinkButton>
+            </nav>
+        </header>
+
+        <div class="container">
+            <div class="form-container">
+                <h1><asp:Literal ID="litPageTitle" runat="server">Tạo nhóm mới</asp:Literal></h1>
+                
+                <asp:Label ID="lblMessage" runat="server" Visible="false" CssClass="message"></asp:Label>
+                <asp:HiddenField ID="hfGroupId" runat="server" Value="0" />
+
+                <div class="input-group">
+                    <label for="txtGroupName">Tên nhóm</label>
+                    <asp:TextBox ID="txtGroupName" runat="server" CssClass="form-control"></asp:TextBox>
+                </div>
+                <div class="input-group">
+                    <label for="txtDescription">Mô tả nhóm</label>
+                    <asp:TextBox ID="txtDescription" runat="server" CssClass="form-control" TextMode="MultiLine" Rows="4"></asp:TextBox>
+                </div>
+
+                <asp:Button ID="btnSubmit" runat="server" Text="Tạo nhóm" CssClass="btn-submit" OnClick="btnSubmit_Click" />
+                <a href="QuanLyNhom.aspx" style="margin-left: 15px; color: #555;">Hủy</a>
+            </div>
+        </div>
+    </form>
+</body>
+</html>
+Trang ThemSuaNhom.aspx.cs
+using System;
+using System.Data.SqlClient;
+using System.Configuration;
+
+namespace CongThucNauAnDB.Sharer
+{
+    public partial class ThemSuaNhom : System.Web.UI.Page
+    {
+        protected void Page_Load(object sender, EventArgs e)
+        {
+            // Bảo vệ trang
+            if (Session["UserRole"] == null || Session["UserRole"].ToString() != "2")
+            {
+                Response.Redirect("~/DangNhap.aspx");
+            }
+
+            if (!IsPostBack)
+            {
+                // Kiểm tra xem đây là trang Thêm hay Sửa
+                if (!string.IsNullOrEmpty(Request.QueryString["id"]))
+                {
+                    int groupId = Convert.ToInt32(Request.QueryString["id"]);
+                    hfGroupId.Value = groupId.ToString();
+                    LoadGroupForEdit(groupId);
+                    litPageTitle.Text = "Chỉnh sửa nhóm";
+                    btnSubmit.Text = "Cập nhật";
+                }
+            }
+        }
+
+        protected void lnkDangXuat_Click(object sender, EventArgs e)
+        {
+            Session.Clear();
+            Session.Abandon();
+            Response.Redirect("~/TrangChu.aspx");
+        }
+
+        // Tải dữ liệu nhóm vào form để sửa
+        private void LoadGroupForEdit(int groupId)
+        {
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                // Lấy thông tin nhóm và kiểm tra owner_id để đảm bảo đúng chủ sở hữu
+                string query = "SELECT * FROM [Groups] WHERE group_id = @GroupId AND owner_id = @OwnerId";
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    cmd.Parameters.AddWithValue("@OwnerId", Session["UserId"]);
+                    try
+                    {
+                        con.Open();
+                        SqlDataReader reader = cmd.ExecuteReader();
+                        if (reader.Read())
+                        {
+                            txtGroupName.Text = reader["group_name"].ToString();
+                            txtDescription.Text = reader["description"].ToString();
+                        }
+                        else
+                        {
+                            ShowMessage("Không tìm thấy nhóm hoặc bạn không có quyền sửa.", true);
+                            btnSubmit.Enabled = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi tải dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        // Xử lý khi nhấn nút Tạo/Cập nhật
+        protected void btnSubmit_Click(object sender, EventArgs e)
+        {
+            int groupId = Convert.ToInt32(hfGroupId.Value);
+            string groupName = txtGroupName.Text.Trim();
+            string description = txtDescription.Text.Trim();
+
+            if (string.IsNullOrEmpty(groupName))
+            {
+                ShowMessage("Tên nhóm không được để trống.", true);
+                return;
+            }
+
+            string connectionString = ConfigurationManager.ConnectionStrings["CongThucDB"].ConnectionString;
+            using (SqlConnection con = new SqlConnection(connectionString))
+            {
+                string query;
+                if (groupId > 0) // Chế độ Sửa
+                {
+                    query = @"UPDATE [Groups] SET 
+                                group_name = @GroupName, 
+                                description = @Description 
+                              WHERE group_id = @GroupId AND owner_id = @OwnerId";
+                }
+                else // Chế độ Thêm
+                {
+                    query = @"INSERT INTO [Groups] (owner_id, group_name, description) 
+                              VALUES (@OwnerId, @GroupName, @Description)";
+                }
+
+                using (SqlCommand cmd = new SqlCommand(query, con))
+                {
+                    cmd.Parameters.AddWithValue("@GroupName", groupName);
+                    cmd.Parameters.AddWithValue("@Description", description);
+                    cmd.Parameters.AddWithValue("@OwnerId", Session["UserId"]);
+                    if (groupId > 0)
+                    {
+                        cmd.Parameters.AddWithValue("@GroupId", groupId);
+                    }
+
+                    try
+                    {
+                        con.Open();
+                        cmd.ExecuteNonQuery();
+                        Response.Redirect("QuanLyNhom.aspx");
+                    }
+                    catch (Exception ex)
+                    {
+                        ShowMessage("Lỗi khi lưu dữ liệu: " + ex.Message, true);
+                    }
+                }
+            }
+        }
+
+        private void ShowMessage(string message, bool isError)
+        {
+            lblMessage.Text = message;
+            lblMessage.CssClass = isError ? "message error" : "message success";
+            lblMessage.Visible = true;
+        }
+    }
+}
+
+
